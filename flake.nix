@@ -197,6 +197,9 @@
                 RuntimeDirectory = "bitchbot";
                 RuntimeDirectoryMode = "0700";
 
+                # Set the working directory to the data directory
+                WorkingDirectory = cfg.dataDir;
+
                 StandardOutput = "journal";
                 StandardError = "journal";
                 SyslogIdentifier = "bitchbot";
