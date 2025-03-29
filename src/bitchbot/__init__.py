@@ -376,7 +376,13 @@ class MatrixBot:
 
 async def main() -> None:
     """Main entry point."""
-    bot = MatrixBot()
+    # Check if CONFIG_FILE env variable is set
+    if "CONFIG_FILE" in os.environ:
+        config_path = os.environ["CONFIG_FILE"]
+    else:
+        config_path = "config.json"
+
+    bot = MatrixBot(config_path=config_path)
     try:
         await bot.start()
     except KeyboardInterrupt:
