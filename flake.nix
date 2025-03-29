@@ -117,7 +117,7 @@
           ...
         }: let
           cfg = config.services.bitchbot;
-          configFile = pkgs.writeText "config.json" (builtins.toJSON cfg.config);
+          configFile = configFormat.generate "config.json" cfg.config;
           configFormat = pkgs.formats.json {};
 
           inherit (lib.options) mkOption;
@@ -185,21 +185,23 @@
 
               serviceConfig = {
                 ExecStart = "${self.packages.${system}.default}/bin/bitchbot";
-                ExecStartPre = [
-                  "mkdir -p ${cfg.dataDir}"
-                  "cp ${configFile} ${cfg.dataDir}/config.json"
-                ];
                 Type = "simple";
                 Restart = "always";
                 RestartSec = "5s";
 
-                # Set the working directory to the data directory
-                WorkingDirectory = cfg.dataDir;
+                User = "bitchbot";
+                Group = "bitchbot";
+
                 StateDirectory = "bitchbot";
+                StateDirectoryMode = "0700";
+                RuntimeDirectory = "bitchbot";
+                RuntimeDirectoryMode = "0700";
 
                 StandardOutput = "journal";
                 StandardError = "journal";
                 SyslogIdentifier = "bitchbot";
+
+                Environment = "CONFIG_FILE=${configFile}";
               };
             };
 
