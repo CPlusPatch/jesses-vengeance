@@ -10,7 +10,8 @@ import random
 import importlib
 import inspect
 import time
-from typing import Dict
+import argparse
+from typing import Dict, Optional, Union, List
 from nio import (
     AsyncClient,
     AsyncClientConfig,
@@ -18,6 +19,8 @@ from nio import (
     RoomMessageText,
     LoginResponse,
     InviteMemberEvent,
+    RoomSendResponse,
+    RoomSendError,
     logger as nio_logger,
 )
 
@@ -27,6 +30,8 @@ logger = logging.getLogger(__name__)
 
 # Set nio logging to WARNING (nio uses the logging library)
 nio_logger.setLevel(level=logging.WARNING)
+
+ALARM_EMOJI = '<img data-mx-emoticon src="mxc://cpluspatch.dev/PwRXSjiNVFhowlNexRYcADNd" alt="alarm" title="alarm" height="32" />'
 
 
 class MatrixBot:
@@ -159,6 +164,95 @@ class MatrixBot:
             return True
         return False
 
+    async def room_send(
+        self,
+        room_id: str,
+        message_type: str,
+        content: dict,
+        tx_id: Optional[str] = None,
+        ignore_unverified_devices: bool = True,
+    ) -> Union[RoomSendResponse, RoomSendError]:
+        return await self.client.room_send(
+            room_id,
+            message_type,
+            content,
+            tx_id,
+            ignore_unverified_devices,
+        )
+
+    def _parse_command_args(
+        self, command_name: str, args: List[str]
+    ) -> Union[argparse.Namespace, str]:
+        """
+        Parse command arguments using argparse based on the command's manifest.
+
+        Args:
+            command_name: Name of the command to parse arguments for
+            args: List of raw arguments to parse
+
+        Returns:
+            Parsed arguments as argparse.Namespace, or str error message if parsing fails
+        """
+        command = self.commands.get(command_name)
+        if not command or "arguments" not in command["manifest"]:
+            return argparse.Namespace()
+
+        parser = argparse.ArgumentParser(prog=command_name, exit_on_error=False)
+
+        # Add arguments from manifest
+        for arg in command["manifest"]["arguments"]:
+            name = arg["name"]
+            if name.startswith("--"):
+                # Optional argument
+                parser.add_argument(
+                    name,
+                    type=arg.get("type", str),
+                    help=arg.get("help", ""),
+                    default=arg.get("default"),
+                    choices=arg.get("choices"),
+                    # Aliases
+                    *arg.get("aliases", []),
+                )
+            else:
+                # Positional argument
+                parser.add_argument(
+                    name,
+                    type=arg.get("type", str),
+                    help=arg.get("help", ""),
+                    choices=arg.get("choices"),
+                    default=arg.get("default"),
+                )
+
+        try:
+            return parser.parse_args(args)
+        except argparse.ArgumentError as e:
+            return f"{e}\n{parser.format_usage()}"
+
+    async def room_send_error(
+        self, room_id: str, error: str, reply_id: Optional[str] = None
+    ) -> None:
+        """Send an error message to the room."""
+
+        content = {
+            "msgtype": "m.text",
+            "body": f":alarm: Oopsie poopsie! An error happened! :alarm: \n\n```\n{error}\n```",
+            "format": "org.matrix.custom.html",
+            "formatted_body": f'{ALARM_EMOJI} Oopsie poopsie! An error happened! {ALARM_EMOJI} <br/><br/><pre data-md="```"><code>{error}</code></pre>',
+        }
+
+        if reply_id:
+            content["m.relates_to"] = {
+                "m.in_reply_to": {
+                    "event_id": reply_id,
+                },
+            }
+
+        await self.room_send(
+            room_id=room_id,
+            message_type="m.room.message",
+            content=content,
+        )
+
     async def message_callback(self, room: MatrixRoom, event: RoomMessageText) -> None:
         """Handle incoming messages."""
         # Ignore messages from the bot itself
@@ -171,9 +265,9 @@ class MatrixBot:
         # Handle commands
         if message.startswith(command_prefix):
             command_text = message[len(command_prefix) :].strip()
-            command_parts = command_text.split(maxsplit=1)
+            command_parts = command_text.split()
             command_name = command_parts[0]
-            args = command_parts[1] if len(command_parts) > 1 else ""
+            args = command_parts[1:]
 
             # Check if it's a command or alias
             if command_name in self.commands:
@@ -184,17 +278,19 @@ class MatrixBot:
                 return
 
             try:
-                await command["execute"](self.client, self.config, room, event, args)
+                # Parse arguments
+                parsed_args = self._parse_command_args(command_name, args)
+                if isinstance(parsed_args, str):
+                    # If argument parsing failed, send help message
+                    await self.room_send_error(
+                        room.room_id, parsed_args, event.event_id
+                    )
+                    return
+
+                await command["execute"](self, room, event, parsed_args)
             except Exception as e:
                 logger.error("Error executing command %s: %s", command_name, e)
-                await self.client.room_send(
-                    room_id=room.room_id,
-                    message_type="m.room.message",
-                    content={
-                        "msgtype": "m.text",
-                        "body": f"Error executing command: {str(e)}",
-                    },
-                )
+                await self.room_send_error(room.room_id, str(e), event.event_id)
             return
 
         # Handle keyword responses with cooldown
@@ -208,10 +304,16 @@ class MatrixBot:
                 )
 
                 if keyword.lower() in message.lower():
-                    await self.client.room_send(
+                    await self.room_send(
                         room_id=room.room_id,
                         message_type="m.room.message",
-                        content={"msgtype": "m.text", "body": response},
+                        content={
+                            "msgtype": "m.text",
+                            "body": response,
+                            "m.relates_to": {
+                                "m.in_reply_to": {"event_id": event.event_id},
+                            },
+                        },
                     )
                     break
 
@@ -223,7 +325,7 @@ class MatrixBot:
                 await self.client.join(room.room_id)
                 logger.info("Joined room %s", room.room_id)
                 # Send a welcome message
-                await self.client.room_send(
+                await self.room_send(
                     room_id=room.room_id,
                     message_type="m.room.message",
                     content={
