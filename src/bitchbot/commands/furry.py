@@ -4,7 +4,7 @@ Calls the bitch wife a furry
 
 import argparse
 from nio import MatrixRoom, RoomMessageText
-from main import MatrixBot
+from bitchbot import MatrixBot
 
 # Command manifest
 MANIFEST = {

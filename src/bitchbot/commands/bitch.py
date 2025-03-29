@@ -5,7 +5,7 @@ Insults the bitch wife
 from random import random
 import argparse
 from nio import MatrixRoom, RoomMessageText
-from main import MatrixBot
+from bitchbot import MatrixBot
 
 # Command manifest
 MANIFEST = {

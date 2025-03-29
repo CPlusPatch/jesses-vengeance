@@ -76,7 +76,7 @@ class MatrixBot:
         commands_dir = os.path.join(os.path.dirname(__file__), "commands")
         for filename in os.listdir(commands_dir):
             if filename.endswith(".py") and not filename.startswith("__"):
-                module_name = f"commands.{filename[:-3]}"
+                module_name = f"bitchbot.commands.{filename[:-3]}"
                 try:
                     # Import the command module
                     module = importlib.import_module(module_name)
@@ -387,6 +387,8 @@ async def main() -> None:
     finally:
         await bot.client.close()
 
+def entrypoint():
+    asyncio.run(main())
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    entrypoint()
