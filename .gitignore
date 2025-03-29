@@ -181,3 +181,6 @@ config.json
 
 # Matrix store
 store
+
+# Nix result
+result

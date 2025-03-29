@@ -133,6 +133,7 @@
                       (old.src + "/pyproject.toml")
                       (old.src + "/README.md")
                       (old.src + "/main.py")
+                      (old.src + "/responses.json")
                     ];
                   };
 

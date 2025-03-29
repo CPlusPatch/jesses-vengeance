@@ -33,14 +33,13 @@ nio_logger.setLevel(level=logging.WARNING)
 
 ALARM_EMOJI = '<img data-mx-emoticon src="mxc://cpluspatch.dev/PwRXSjiNVFhowlNexRYcADNd" alt="alarm" title="alarm" height="32" />'
 
-
 class MatrixBot:
     """
     Main bot class.
     """
 
     def __init__(
-        self, config_path: str = "config.json", responses_path: str = "src/bitchbot/responses.json"
+        self, config_path: str = "config.json", responses_path: str = os.path.join(os.path.dirname(__file__), "responses.json")
     ):
         self.config = self._load_config(config_path)
         self.responses = self._load_responses(responses_path)
