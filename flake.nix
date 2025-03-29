@@ -117,7 +117,7 @@
           ...
         }: let
           cfg = config.services.bitchbot;
-          configFile = pkgs.writeText "config.json" cfg.config;
+          configFile = pkgs.writeText "config.json" (builtins.toJSON cfg.config);
           configFormat = pkgs.formats.json {};
 
           inherit (lib.options) mkOption;
