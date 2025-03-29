@@ -40,7 +40,7 @@ class MatrixBot:
     """
 
     def __init__(
-        self, config_path: str = "config.json", responses_path: str = "responses.json"
+        self, config_path: str = "config.json", responses_path: str = "src/bitchbot/responses.json"
     ):
         self.config = self._load_config(config_path)
         self.responses = self._load_responses(responses_path)
