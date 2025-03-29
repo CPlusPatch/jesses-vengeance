@@ -33,13 +33,16 @@ nio_logger.setLevel(level=logging.WARNING)
 
 ALARM_EMOJI = '<img data-mx-emoticon src="mxc://cpluspatch.dev/PwRXSjiNVFhowlNexRYcADNd" alt="alarm" title="alarm" height="32" />'
 
+
 class MatrixBot:
     """
     Main bot class.
     """
 
     def __init__(
-        self, config_path: str = "config.json", responses_path: str = os.path.join(os.path.dirname(__file__), "responses.json")
+        self,
+        config_path: str = "config.json",
+        responses_path: str = os.path.join(os.path.dirname(__file__), "responses.json"),
     ):
         self.config = self._load_config(config_path)
         self.responses = self._load_responses(responses_path)
@@ -134,7 +137,7 @@ class MatrixBot:
         with open(self.credentials_file, "w", encoding="utf-8") as f:
             json.dump(credentials, f)
 
-    def _load_credentials(self) -> Dict:
+    def _load_credentials(self) -> Optional[Dict]:
         """Load login credentials from disk."""
         try:
             with open(self.credentials_file, "r", encoding="utf-8") as f:
@@ -232,7 +235,7 @@ class MatrixBot:
     ) -> None:
         """Send an error message to the room."""
 
-        content = {
+        content: dict = {
             "msgtype": "m.text",
             "body": f":alarm: Oopsie poopsie! An error happened! :alarm: \n\n```\n{error}\n```",
             "format": "org.matrix.custom.html",
@@ -338,9 +341,9 @@ class MatrixBot:
     async def start(self) -> None:
         """Start the bot."""
         # Add message callback
-        self.client.add_event_callback(self.message_callback, RoomMessageText)
+        self.client.add_event_callback(self.message_callback, RoomMessageText)  # type: ignore
         # Add invite callback
-        self.client.add_event_callback(self.invite_callback, InviteMemberEvent)
+        self.client.add_event_callback(self.invite_callback, InviteMemberEvent)  # type: ignore
 
         # Try to load existing credentials
         credentials = self._load_credentials()
@@ -392,8 +395,10 @@ async def main() -> None:
     finally:
         await bot.client.close()
 
+
 def entrypoint():
     asyncio.run(main())
+
 
 if __name__ == "__main__":
     entrypoint()
