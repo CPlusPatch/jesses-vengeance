@@ -11,8 +11,8 @@ import importlib
 import inspect
 import time
 import argparse
-import aiohttp
 from typing import Dict, Optional, Union, List
+import aiohttp
 from nio import (
     AsyncClient,
     AsyncClientConfig,
