@@ -207,6 +207,10 @@
               name = "bitchbot";
               group = "bitchbot";
               home = cfg.dataDir;
+              isSystemUser = true;
+              packages = [
+                self.packages.${system}.default
+              ];
             };
 
             users.groups.bitchbot = {};
