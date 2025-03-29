@@ -11,7 +11,6 @@ MANIFEST = {
     "name": "furry",
     "description": "Calls the bitch wife a furry",
     "usage": "!furry",
-    "aliases": ["furry"],
 }
 
 

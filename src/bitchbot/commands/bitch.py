@@ -12,7 +12,6 @@ MANIFEST = {
     "name": "bitch",
     "description": "Insults the bitch wife",
     "usage": "!bitch",
-    "aliases": ["nexy", "whore"],
     "arguments": [
         {
             "name": "--repeat",
