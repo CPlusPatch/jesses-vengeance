@@ -11,6 +11,7 @@ import importlib
 import inspect
 import time
 import argparse
+import aiohttp
 from typing import Dict, Optional, Union, List
 from nio import (
     AsyncClient,
@@ -52,6 +53,7 @@ class MatrixBot:
         self.last_response_times = (
             {}
         )  # Dictionary to track last response times per room
+        self.health_check_task = None  # Task for health check requests
 
         # If store path doesn't exist, create it
         if not os.path.exists(self.config["store_path"]):
@@ -338,6 +340,24 @@ class MatrixBot:
             except Exception as e:
                 logger.error("Failed to join room %s: %s", room.room_id, e)
 
+    async def _health_check(self) -> None:
+        """Send periodic health check requests to the configured URI."""
+        if not self.config.get("health_check_uri"):
+            return
+
+        while True:
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(self.config["health_check_uri"]) as response:
+                        if response.status != 200:
+                            logger.warning(
+                                "Health check failed with status %d", response.status
+                            )
+            except Exception as e:
+                logger.error("Health check request failed: %s", e)
+
+            await asyncio.sleep(15)  # Wait 15 seconds before next check
+
     async def start(self) -> None:
         """Start the bot."""
         # Add message callback
@@ -373,8 +393,25 @@ class MatrixBot:
         if self.client.should_upload_keys:
             await self.client.keys_upload()
 
+        # Start health check task if URI is configured
+        if self.config.get("health_check_uri"):
+            self.health_check_task = asyncio.create_task(self._health_check())
+            logger.info(
+                "Started health check task for URI: %s", self.config["health_check_uri"]
+            )
+
         # Start syncing
         await self.client.sync_forever(timeout=30000)
+
+    async def stop(self) -> None:
+        """Stop the bot and clean up tasks."""
+        if self.health_check_task:
+            self.health_check_task.cancel()
+            try:
+                await self.health_check_task
+            except asyncio.CancelledError:
+                pass
+        await self.client.close()
 
 
 async def main() -> None:
@@ -393,7 +430,7 @@ async def main() -> None:
     except Exception as e:
         logger.error("Error: %s", e)
     finally:
-        await bot.client.close()
+        await bot.stop()
 
 
 def entrypoint():
