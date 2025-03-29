@@ -104,8 +104,114 @@
         bitchbot = {
           type = "app";
           program = "${self.packages.${system}.default}/bin/bitchbot";
+          meta = self.packages.${system}.default.meta;
         };
         default = bitchbot;
+      };
+
+      nixosModules = {
+        bitchbot = {
+          config,
+          lib,
+          pkgs,
+          ...
+        }: let
+          cfg = config.services.bitchbot;
+          configFile = pkgs.writeText "config.json" cfg.config;
+          configFormat = pkgs.formats.json {};
+
+          inherit (lib.options) mkOption;
+          inherit (lib.modules) mkIf;
+        in {
+          options.services.bitchbot = {
+            enable = mkOption {
+              type = lib.types.bool;
+              default = false;
+              description = "Whether to enable the bitchbot service";
+            };
+
+            dataDir = mkOption {
+              type = lib.types.str;
+              default = "/var/lib/bitchbot";
+              description = "Path to the data directory for the bot";
+            };
+
+            config = mkOption {
+              type = with lib.types;
+                submodule {
+                  freeformType = configFormat.type;
+                  options = {
+                    # This is a reduced set of popular options and defaults
+                    # Do not add every available option here, they can be specified
+                    # by the user at their own discretion. This is a freeform type!
+
+                    homeserver_url = mkOption {
+                      type = types.str;
+                      description = "The homeserver URL";
+                      default = "https://cpluspatch.dev";
+                    };
+
+                    user_id = mkOption {
+                      type = types.str;
+                      description = "The user ID that the bot will use to login to matrix";
+                      default = "@bitchbot:cpluspatch.dev";
+                    };
+
+                    store_path = mkOption {
+                      type = types.str;
+                      description = "Path to the store for the bot";
+                      default = "./store";
+                    };
+
+                    wife_id = mkOption {
+                      type = types.str;
+                      description = "The user ID of the wife";
+                      default = "@nex:nexy7574.co.uk";
+                    };
+                  };
+                };
+              description = "Contents of the config file for the bitchbot service";
+              default = {};
+            };
+          };
+
+          config = mkIf cfg.enable {
+            systemd.services.bitchbot = {
+              after = ["network-online.target"];
+              wantedBy = ["multi-user.target"];
+              requires = ["network-online.target"];
+
+              description = "Bitchbot service";
+
+              serviceConfig = {
+                ExecStart = "${self.packages.${system}.default}/bin/bitchbot";
+                ExecStartPre = [
+                  "mkdir -p ${cfg.dataDir}"
+                  "cp ${configFile} ${cfg.dataDir}/config.json"
+                ];
+                Type = "simple";
+                Restart = "always";
+                RestartSec = "5s";
+
+                # Set the working directory to the data directory
+                WorkingDirectory = cfg.dataDir;
+                StateDirectory = "bitchbot";
+
+                StandardOutput = "journal";
+                StandardError = "journal";
+                SyslogIdentifier = "bitchbot";
+              };
+            };
+
+            users.users.bitchbot = {
+              name = "bitchbot";
+              group = "bitchbot";
+              home = cfg.dataDir;
+            };
+
+            users.groups.bitchbot = {};
+          };
+        };
       };
 
       devShells = {
@@ -132,8 +238,6 @@
                     fileset = lib.fileset.unions [
                       (old.src + "/pyproject.toml")
                       (old.src + "/README.md")
-                      (old.src + "/main.py")
-                      (old.src + "/responses.json")
                     ];
                   };
 
