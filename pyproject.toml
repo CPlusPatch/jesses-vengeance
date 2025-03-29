@@ -1,0 +1,24 @@
+[project]
+name = "bitchbot"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Jesse Wierzbinski",email = "contact@cpluspatch.com"}
+]
+license = {text = "AGPL-3.0"}
+readme = "README.md"
+requires-python = ">=3.13,<4.0"
+dependencies = [
+    "matrix-nio[e2ee] (>=0.25.2,<0.26.0)",
+    "python-olm (>=3.2.16,<4.0.0)",
+    "cachetools (>=5.5.2,<6.0.0)",
+    "atomicwrites (>=1.4.1,<2.0.0)",
+    "peewee (>=3.17.9,<4.0.0)"
+]
+
+[tool.poetry]
+package-mode = false
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
