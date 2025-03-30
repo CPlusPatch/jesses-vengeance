@@ -263,6 +263,11 @@ class MatrixBot:
         if event.sender == self.config["user_id"]:
             return
 
+        # Check if user is banned
+        if event.sender in self.config.get("banned_users", []):
+            logger.info("Ignoring message from banned user %s", event.sender)
+            return
+
         message = event.body.lower()
         command_prefix = self.config["command_prefix"]
 

@@ -38,10 +38,10 @@ async def execute(
     args: argparse.Namespace,
 ) -> None:
     user = args.user or client.config["wife_id"]
-    insult = "bitch"
+    insult = "bi­­tch"
 
     if random() < WHORE_PROBABILITY:
-        insult = "whore"
+        insult = "wh­­ore"
 
     for _ in range(args.repeat):
         await client.room_send(
