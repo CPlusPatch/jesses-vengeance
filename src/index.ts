@@ -112,7 +112,7 @@ export class Bot {
 		}
 
 		await this.client.sendMessage(roomId, {
-			msgtype: "m.text",
+			msgtype: "m.notice",
 			body: message,
 			format: "org.matrix.custom.html",
 			formatted_body: parsed,
@@ -133,7 +133,7 @@ export class Bot {
 			...(options?.edit
 				? {
 						"m.new_content": {
-							msgtype: "m.text",
+							msgtype: "m.notice",
 							body: message,
 							format: "org.matrix.custom.html",
 							formatted_body: parsed,
