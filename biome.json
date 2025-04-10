@@ -1,0 +1,181 @@
+{
+    "$schema": "https://biomejs.dev/schemas/2.0.0-beta.1/schema.json",
+    "assist": {
+        "actions": {
+            "source": {
+                "organizeImports": "on"
+            }
+        }
+    },
+    "linter": {
+        "enabled": true,
+        "rules": {
+            "style": {
+                "useNamingConvention": {
+                    "level": "warn",
+                    "options": {
+                        "requireAscii": false,
+                        "strictCase": false,
+                        "conventions": [
+                            {
+                                "selector": {
+                                    "kind": "typeProperty"
+                                },
+                                "formats": [
+                                    "camelCase",
+                                    "CONSTANT_CASE",
+                                    "PascalCase",
+                                    "snake_case"
+                                ]
+                            },
+                            {
+                                "selector": {
+                                    "kind": "objectLiteralProperty",
+                                    "scope": "any"
+                                },
+                                "formats": [
+                                    "camelCase",
+                                    "CONSTANT_CASE",
+                                    "PascalCase",
+                                    "snake_case"
+                                ]
+                            }
+                        ]
+                    }
+                },
+                "useLiteralEnumMembers": "error",
+                "noCommaOperator": "error",
+                "noNegationElse": "error",
+                "noYodaExpression": "error",
+                "useBlockStatements": "error",
+                "useCollapsedElseIf": "error",
+                "useConsistentArrayType": {
+                    "level": "error",
+                    "options": {
+                        "syntax": "shorthand"
+                    }
+                },
+                "useConsistentBuiltinInstantiation": "error",
+                "useExplicitLengthCheck": "error",
+                "useForOf": "error",
+                "useNodeAssertStrict": "error",
+                "useShorthandAssign": "error",
+                "useThrowNewError": "error",
+                "useThrowOnlyError": "error",
+                "useNodejsImportProtocol": "error",
+                "useAsConstAssertion": "error",
+                "useNumericLiterals": "error",
+                "useEnumInitializers": "error",
+                "useSelfClosingElements": "error",
+                "useConst": "error",
+                "useSingleVarDeclarator": "error",
+                "noUnusedTemplateLiteral": "error",
+                "useNumberNamespace": "error",
+                "noInferrableTypes": "error",
+                "useExponentiationOperator": "error",
+                "useTemplate": "error",
+                "noParameterAssign": "error",
+                "noNonNullAssertion": "error",
+                "useDefaultParameterLast": "error",
+                "noArguments": "error",
+                "useImportType": "error",
+                "useExportType": "error",
+                "noUselessElse": "error",
+                "useShorthandFunctionType": "error"
+            },
+            "correctness": {
+                "useImportExtensions": "error",
+                "noConstantMathMinMaxClamp": "error",
+                "noUndeclaredDependencies": "error",
+                "noUnusedFunctionParameters": "error",
+                "noUnusedImports": "error",
+                "noUnusedPrivateClassMembers": "error",
+                "useArrayLiterals": "error"
+            },
+            "nursery": {
+                "noBitwiseOperators": "error",
+                "noConstantBinaryExpression": "error",
+                "noFloatingPromises": "error",
+                "noGlobalDirnameFilename": "error",
+                "noOctalEscape": "error",
+                "noProcessEnv": "error",
+                "noDuplicateElseIf": "warn",
+                "noProcessGlobal": "warn",
+                "noTsIgnore": "warn",
+                "useAtIndex": "warn",
+                "useCollapsedIf": "warn",
+                "useConsistentObjectDefinition": {
+                    "level": "warn",
+                    "options": {
+                        "syntax": "shorthand"
+                    }
+                },
+                "useConsistentMemberAccessibility": {
+                    "level": "warn",
+                    "options": {
+                        "accessibility": "explicit"
+                    }
+                },
+                "useParseIntRadix": "warn",
+                "noCommonJs": "warn",
+                "noDynamicNamespaceImportAccess": "warn",
+                "noExportedImports": "warn",
+                "noIrregularWhitespace": "warn",
+                "noSubstr": "warn",
+                "noTemplateCurlyInString": "warn",
+                "noUselessEscapeInRegex": "warn",
+                "noUselessStringRaw": "warn",
+                "useAdjacentOverloadSignatures": "warn",
+                "useExplicitType": "warn",
+                "useGuardForIn": "warn",
+                "useTrimStartEnd": "warn"
+            },
+            "complexity": {
+                "noForEach": "error",
+                "noUselessStringConcat": "error",
+                "useDateNow": "error",
+                "useSimplifiedLogicExpression": "error",
+                "useWhile": "error"
+            },
+            "suspicious": {
+                "noDuplicateTestHooks": "error",
+                "noEmptyBlockStatements": "error",
+                "noEvolvingTypes": "error",
+                "noExportsInTest": "error",
+                "noVar": "error",
+                "useAwait": "error",
+                "useErrorMessage": "error",
+                "useNumberToFixedDigitsArgument": "error"
+            }
+        }
+    },
+    "overrides": [
+        {
+            "includes": ["**/packages/client/versia/client.ts"],
+            "linter": {
+                "rules": {
+                    "style": {
+                        "useNamingConvention": "off"
+                    }
+                }
+            }
+        }
+    ],
+    "formatter": {
+        "enabled": true,
+        "indentStyle": "space",
+        "indentWidth": 4
+    },
+    "javascript": {
+        "globals": ["HTMLRewriter", "BufferEncoding"]
+    },
+    "files": {
+        "includes": [
+            "**",
+            "!**/node_modules",
+            "!**/dist",
+            "!**/cache",
+            "!**/build"
+        ]
+    }
+}
