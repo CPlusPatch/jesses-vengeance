@@ -193,20 +193,20 @@ export class Bot {
             return;
         }
 
-        if (config.users.banned.some((b) => new Glob(b).match(sender))) {
-            await this.sendMessage(roomId, "🖕", {
-                replyTo: eventId,
-            });
-            return;
-        }
-
-        if (body?.startsWith(config.commands.prefix)) {
+        if (body?.trim().startsWith(config.commands.prefix)) {
             const commandName = body
                 .split(" ")[0]
                 ?.slice(config.commands.prefix.length)
                 .toLowerCase();
 
             if (!commandName) {
+                return;
+            }
+
+            if (config.users.banned.some((b) => new Glob(b).match(sender))) {
+                await this.sendMessage(roomId, "🖕", {
+                    replyTo: eventId,
+                });
                 return;
             }
 
