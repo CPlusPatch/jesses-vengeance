@@ -39,7 +39,7 @@
             mkdir -p $out/bin
             cp -r . $out/
             echo '#!${pkgs.bash}/bin/bash' > $out/bin/bitchbot
-            echo '${pkgs.bun}/bin/bun run index.ts' >> $out/bin/bitchbot
+            echo '${pkgs.bun}/bin/bun run $out/index.ts' >> $out/bin/bitchbot
             chmod +x $out/bin/bitchbot
           '';
         });
