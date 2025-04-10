@@ -2,6 +2,8 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
+    nixpkgs-bun-129.url = "github:pan93412/nixpkgs/bun-1.2.9";
+
     flake-utils = {
       url = "github:numtide/flake-utils";
     };
@@ -11,10 +13,16 @@
     self,
     nixpkgs,
     flake-utils,
+    nixpkgs-bun-129,
   }:
     flake-utils.lib.eachDefaultSystem (system: let
+      overlay = final: prev: {
+        inherit (nixpkgs-bun-129.legacyPackages.${prev.system}) bun;
+      };
+
       pkgs = import nixpkgs {
         inherit system;
+        overlays = [overlay];
       };
       pnpm = pkgs.pnpm_9;
 

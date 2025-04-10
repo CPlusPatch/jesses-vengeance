@@ -1,35 +1,43 @@
 import type { CommandManifest } from "../commands.ts";
+import { formatBalance, getUserBalance, setUserBalance } from "../currency.ts";
+
+const choices = [
+    "rock",
+    "paper",
+    "scissors",
+    "milton keynes",
+    "among us",
+    "nexy",
+    "jesse",
+    "matt damon",
+] as const;
+const rules = {
+    rock: ["scissors", "nexy", "jesse"],
+    paper: ["rock", "matt damon", "milton keynes"],
+    scissors: ["paper", "among us"],
+    "milton keynes": ["paper", "rock"],
+    "among us": ["jesse", "matt damon", "milton keynes"],
+    nexy: ["rock", "jesse", "milton keynes"],
+    jesse: ["rock", "nexy"],
+    "matt damon": ["rock", "nexy"],
+};
 
 export default {
     name: "rockpaperscissors",
     description: "Play a game of rock paper scissors",
     aliases: ["rps"],
     execute: async (client, roomId, event): Promise<void> => {
-        const choices = [
-            "rock",
-            "paper",
-            "scissors",
-            "milton keynes",
-            "among us",
-            "nexy",
-            "jesse",
-            "matt damon",
-        ] as const;
-        const rules = {
-            rock: ["scissors", "nexy", "jesse"],
-            paper: ["rock", "matt damon", "milton keynes"],
-            scissors: ["paper", "among us"],
-            "milton keynes": ["paper", "rock"],
-            "among us": ["jesse", "matt damon", "milton keynes"],
-            nexy: ["rock", "jesse", "milton keynes"],
-            jesse: ["rock", "nexy"],
-            "matt damon": ["rock", "nexy"],
-        };
+        const {
+            sender,
+            content: { body },
+        } = event;
+
+        const userWager = Number(body.split(" ")[1]);
+        const balance = await getUserBalance(client, sender);
 
         const choice = choices[
             Math.floor(Math.random() * choices.length)
         ] as (typeof choices)[number];
-        const { sender } = event;
 
         await client.sendMessage(
             roomId,
@@ -66,28 +74,48 @@ export default {
                 return;
             }
 
-            await client.sendMessage(
-                roomId,
-                `You chose \`${userChoice}\`, I chose \`${choice}\`!`,
-                {
-                    replyTo: event.event_id,
-                },
-            );
+            const message = `You chose \`${userChoice}\`, I chose \`${choice}\`!`;
 
             if (userChoice === choice) {
                 await client.sendMessage(roomId, "It's a tie!");
             } else if (rules[userChoice].includes(choice)) {
                 await client.sendMessage(
                     roomId,
-                    `${userChoice} beats ${choice}!`,
+                    `${message}\n\`${userChoice}\` beats \`${choice}\`!`,
                 );
-                await client.sendMessage(roomId, "You **win**! Whoohoo!");
+
+                if (userWager > 0) {
+                    await client.sendMessage(
+                        roomId,
+                        `You won ${formatBalance(
+                            userWager * 2,
+                        )}!\n\nNew balance: ${formatBalance(
+                            balance + userWager,
+                        )}`,
+                    );
+                    await setUserBalance(client, sender, balance + userWager);
+                } else {
+                    await client.sendMessage(roomId, "You **win**! Whoohoo!");
+                }
             } else {
                 await client.sendMessage(
                     roomId,
-                    `${userChoice} does NOT beat ${choice}!`,
+                    `${message}\n\`${userChoice}\` does NOT beat \`${choice}\`!`,
                 );
-                await client.sendMessage(roomId, "you **LOSE** dumbass");
+
+                if (userWager > 0) {
+                    await client.sendMessage(
+                        roomId,
+                        `You lost ${formatBalance(
+                            userWager,
+                        )}!\n\nNew balance: ${formatBalance(
+                            balance - userWager,
+                        )}`,
+                    );
+                    await setUserBalance(client, sender, balance - userWager);
+                } else {
+                    await client.sendMessage(roomId, "you **LOSE** dumbass");
+                }
             }
 
             client.client.off("room.message", callback);

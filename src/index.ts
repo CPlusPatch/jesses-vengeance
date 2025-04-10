@@ -1,7 +1,8 @@
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { input } from "@inquirer/prompts";
-import { file, Glob, write } from "bun";
+import { createClient } from "@redis/client";
+import { env, file, Glob, write } from "bun";
 import MarkdownIt from "markdown-it";
 import {
     AutojoinRoomsMixin,
@@ -21,6 +22,9 @@ const credentialsFile = file("credentials.json");
 export class Bot {
     public client!: MatrixClient;
     public commands: CommandManifest[] = [];
+    public redis = createClient({
+        url: config.redis.url ?? env.REDIS_URL,
+    });
 
     public async start(): Promise<void> {
         const { accessToken } = await this.loadCredentials();
@@ -38,10 +42,23 @@ export class Bot {
             crypto,
         );
 
+        await this.redis.connect();
+
         AutojoinRoomsMixin.setupOnClient(this.client);
 
-        const handleMessage = (roomId: string, e: unknown): Promise<void> =>
-            this.handleMessage(roomId, new MessageEvent(e));
+        const handleMessage = (roomId: string, e: unknown): Promise<void> => {
+            try {
+                return this.handleMessage(roomId, new MessageEvent(e));
+            } catch (e) {
+                return this.sendMessage(
+                    roomId,
+                    `## Exeption while running command:\n\n\`\`\`\n${e}\n\`\`\``,
+                    {
+                        replyTo: (e as { event_id: string }).event_id,
+                    },
+                );
+            }
+        };
 
         // We don't directly use the event handler, because otherwise we get a confusing "this" context
         this.client.on("room.message", handleMessage);

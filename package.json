@@ -17,6 +17,7 @@
     },
     "dependencies": {
         "@inquirer/prompts": "^7.4.1",
+        "@redis/client": "^1.6.0",
         "c12": "^3.0.3",
         "markdown-it": "^14.1.0",
         "matrix-bot-sdk": "^0.7.1"

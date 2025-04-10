@@ -10,6 +10,9 @@ interface Config {
     monitoring: {
         health_check_uri?: string;
     };
+    redis: {
+        url?: string;
+    };
     commands: {
         prefix: string;
     };
