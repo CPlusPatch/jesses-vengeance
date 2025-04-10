@@ -17,6 +17,11 @@
         inherit system;
       };
       pnpm = pkgs.pnpm_9;
+
+      crypto = pkgs.fetchurl {
+        url = "https://github.com/matrix-org/matrix-rust-sdk/releases/download/matrix-sdk-crypto-nodejs-v0.1.0-beta.6/matrix-sdk-crypto.linux-x64-gnu.node";
+        sha256 = "sha256-+bjKA1CiCF0Yngaxn/raVonvhDo5RwXkc6EQaJPZ9IM=";
+      };
     in {
       packages = rec {
         bitchbot = pkgs.stdenv.mkDerivation (finalAttrs: {
@@ -25,22 +30,40 @@
 
           src = ./.;
 
+          buildPhase = ''
+            runHook preBuild
+
+            (
+              cd node_modules/.pnpm/node_modules/@matrix-org/matrix-sdk-crypto-nodejs
+              cp ${crypto} matrix-sdk-crypto.linux-x64-gnu.node
+            )
+
+            runHook postBuild
+          '';
+
           pnpmDeps = pnpm.fetchDeps {
             inherit (finalAttrs) pname version src;
             hash = "sha256-QUudx5A9249NYnjDx19fNysR7usOSmkfjk076RzmrZM=";
           };
 
           nativeBuildInputs = [
-            pnpm
+            pnpm.configHook
             pkgs.bun
+            pkgs.makeWrapper
+            pkgs.nodejs
           ];
 
           installPhase = ''
+            runHook preInstall
+
             mkdir -p $out/bin
-            cp -r . $out/
-            echo '#!${pkgs.bash}/bin/bash' > $out/bin/bitchbot
-            echo '${pkgs.bun}/bin/bun run $out/index.ts' >> $out/bin/bitchbot
-            chmod +x $out/bin/bitchbot
+            mkdir -p $out/bitchbot
+            cp -r * $out/bitchbot
+
+            makeWrapper ${pkgs.lib.getExe pkgs.bun} $out/bin/bitchbot \
+              --add-flags "run $out/bitchbot/index.ts"
+
+            runHook postInstall
           '';
         });
         default = bitchbot;
