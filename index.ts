@@ -1,4 +1,4 @@
-import { Bot } from "./src";
+import { Bot } from "./src/index.ts";
 
 const bot = new Bot();
 

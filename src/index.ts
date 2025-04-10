@@ -20,7 +20,7 @@ const credentialsFile = file("credentials.json");
 
 export class Bot {
     public client!: MatrixClient;
-    private commands: CommandManifest[] = [];
+    public commands: CommandManifest[] = [];
 
     public async start(): Promise<void> {
         const { accessToken } = await this.loadCredentials();
@@ -128,6 +128,43 @@ export class Bot {
                   }
                 : undefined),
         });
+    }
+
+    public async sendMedia(
+        roomId: string,
+        mxcUrl: string,
+        options: {
+            replyTo?: string;
+            edit?: string;
+            sticker?: boolean;
+        },
+    ): Promise<void> {
+        await this.client.sendEvent(
+            roomId,
+            options.sticker ? "m.sticker" : "m.room.message",
+            {
+                msgtype: options.sticker ? undefined : "m.image",
+                body: "Image",
+                url: mxcUrl,
+                ...(options?.replyTo
+                    ? {
+                          "m.relates_to": {
+                              "m.in_reply_to": {
+                                  event_id: options.replyTo,
+                              },
+                          },
+                      }
+                    : undefined),
+                ...(options?.edit
+                    ? {
+                          "m.relates_to": {
+                              rel_type: "m.replace",
+                              event_id: options.edit,
+                          },
+                      }
+                    : undefined),
+            },
+        );
     }
 
     /**

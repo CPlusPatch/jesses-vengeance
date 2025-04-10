@@ -1,7 +1,7 @@
 import type { CommandManifest } from "../commands.ts";
 
 export default {
-    name: "rps",
+    name: "rockpaperscissors",
     description: "Play a game of rock paper scissors",
     aliases: ["rps"],
     execute: async (client, roomId, event): Promise<void> => {

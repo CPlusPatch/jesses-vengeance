@@ -1,5 +1,5 @@
 import type { MessageEvent, TextualMessageEventContent } from "matrix-bot-sdk";
-import type { Bot } from ".";
+import type { Bot } from "./index.ts";
 
 export interface CommandManifest {
     name: string;
