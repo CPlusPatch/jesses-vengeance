@@ -194,6 +194,9 @@ export class Bot {
         }
 
         if (config.users.banned.some((b) => new Glob(b).match(sender))) {
+            await this.sendMessage(roomId, "🖕", {
+                replyTo: eventId,
+            });
             return;
         }
 
