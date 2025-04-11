@@ -2,6 +2,7 @@ import consola from "consola";
 import type { Bot } from "./index.ts";
 
 export const DEFAULT_BALANCE = 100;
+export const AMOUNT_CAP = 1e6;
 export const CURRENCY_SYMBOL = "B$";
 export const CURRENCY_NAME = "bitchcoins";
 
@@ -40,6 +41,10 @@ export const formatBalance = (balance: number): string => {
     return `\`${formatted}\``;
 };
 
+export const isValidNonNegativeAmount = (amount: number): boolean => {
+    return amount > 0 && !Number.isNaN(amount) && amount <= AMOUNT_CAP;
+};
+
 export const isValidAmount = (amount: number): boolean => {
-    return amount > 0 && !Number.isNaN(amount);
+    return !Number.isNaN(amount) && amount <= AMOUNT_CAP;
 };

@@ -1,5 +1,5 @@
 import type { MessageEvent, TextualMessageEventContent } from "matrix-bot-sdk";
-import { isValidAmount } from "./currency.ts";
+import { isValidAmount, isValidNonNegativeAmount } from "./currency.ts";
 import type { Bot } from "./index.ts";
 
 export interface Arg {
@@ -52,10 +52,10 @@ export const validateUserArg = async (
 };
 
 export const validateCurrencyArg = (arg: string): boolean =>
-    !Number.isNaN(Number(arg.replaceAll("$", "").trim()));
+    isValidAmount(Number(arg.replaceAll("$", "").trim()));
 
 export const validateNonNegativeCurrencyArg = (arg: string): boolean =>
-    isValidAmount(Number(arg.replaceAll("$", "").trim()));
+    isValidNonNegativeAmount(Number(arg.replaceAll("$", "").trim()));
 
 export const validateNumberArg = (arg: string): boolean =>
     !Number.isNaN(Number(arg.trim()));
