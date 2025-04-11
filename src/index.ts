@@ -215,11 +215,15 @@ export class Bot {
     ): Promise<void> {
         const {
             sender,
-            content: { body },
+            content: { body, msgtype },
             eventId,
         } = event;
 
         if ((await this.client.getUserId()) === sender) {
+            return;
+        }
+
+        if (msgtype === "m.notice") {
             return;
         }
 
