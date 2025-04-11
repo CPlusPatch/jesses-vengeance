@@ -34,27 +34,10 @@
         "type": "github"
       }
     },
-    "nixpkgs-bun-129": {
-      "locked": {
-        "lastModified": 1744259944,
-        "narHash": "sha256-FiEvY4rpQkAMCBKLME5wHoOMxPZl0axIAl7Ue55cKk0=",
-        "owner": "pan93412",
-        "repo": "nixpkgs",
-        "rev": "3628e2207e6a14f04c516c174fcd3817bab96276",
-        "type": "github"
-      },
-      "original": {
-        "owner": "pan93412",
-        "ref": "bun-1.2.9",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "root": {
       "inputs": {
         "flake-utils": "flake-utils",
-        "nixpkgs": "nixpkgs",
-        "nixpkgs-bun-129": "nixpkgs-bun-129"
+        "nixpkgs": "nixpkgs"
       }
     },
     "systems": {

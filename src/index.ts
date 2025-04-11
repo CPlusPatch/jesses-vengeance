@@ -21,6 +21,7 @@ import {
 } from "./autoresponder.ts";
 import type { CommandManifest } from "./commands.ts";
 import { config } from "./config.ts";
+import consola from "consola";
 
 const credentialsFile = file("credentials.json");
 
@@ -48,8 +49,10 @@ export class Bot {
         );
 
         await this.redis.connect();
+        consola.info("Redis connected!");
 
         AutojoinRoomsMixin.setupOnClient(this.client);
+        consola.info("AutojoinRoomsMixin setup!");
 
         const handleMessage = (roomId: string, e: unknown): Promise<void> => {
             try {
@@ -75,7 +78,7 @@ export class Bot {
                 );
 
                 if (!ok) {
-                    console.error(
+                    consola.warn(
                         `Health check failed with status ${status} for ${config.monitoring.health_check_uri}`,
                     );
                 }
@@ -85,7 +88,7 @@ export class Bot {
         }
 
         await this.loadCommands();
-        await this.client.start().then(() => console.log("Bot started!"));
+        await this.client.start().then(() => consola.info("Bot started!"));
     }
 
     /**

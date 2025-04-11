@@ -17,6 +17,9 @@ importers:
       c12:
         specifier: ^3.0.3
         version: 3.0.3
+      consola:
+        specifier: ^3.4.2
+        version: 3.4.2
       markdown-it:
         specifier: ^14.1.0
         version: 14.1.0
