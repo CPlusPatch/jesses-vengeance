@@ -8,12 +8,11 @@ export default {
         {
             name: "target",
             description: "The user to become",
-            required: true,
             type: "user",
         },
     ],
     execute: async (client, roomId, event, args): Promise<void> => {
-        const [target] = args as [string];
+        const [target] = args;
         const { sender } = event;
 
         if (!config.users.admin.includes(sender)) {
@@ -24,6 +23,27 @@ export default {
                     replyTo: event.eventId,
                 },
             );
+            return;
+        }
+
+        if (!target) {
+            // Reset profile to normal
+            const { avatar_url, displayname } =
+                await client.client.getUserProfile(
+                    await client.client.getUserId(),
+                );
+
+            await client.client.sendStateEvent(
+                roomId,
+                "m.room.member",
+                await client.client.getUserId(),
+                {
+                    displayname,
+                    avatar_url,
+                    membership: "join",
+                },
+            );
+
             return;
         }
 
@@ -50,9 +70,5 @@ export default {
                 membership: "join",
             },
         );
-
-        await client.sendMessage(roomId, "Hi!", {
-            replyTo: event.eventId,
-        });
     },
 } satisfies CommandManifest;
