@@ -1,3 +1,4 @@
+import consola from "consola";
 import type { CommandManifest } from "../commands.ts";
 import { formatBalance, getUserBalance, setUserBalance } from "../currency.ts";
 
@@ -38,6 +39,10 @@ export default {
 
         const [wager] = args;
         const balance = await getUserBalance(client, sender);
+
+        if (wager) {
+            consola.debug(`${sender} is betting ${wager} on rockpaperscissors`);
+        }
 
         if (wager && Number(wager) > balance) {
             return await client.sendMessage(
