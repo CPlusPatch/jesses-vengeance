@@ -28,6 +28,13 @@ export default {
         const senderBalance = await getUserBalance(client, sender);
         const targetBalance = await getUserBalance(client, target);
 
+        if (sender === target) {
+            return await client.sendMessage(
+                roomId,
+                "You can't give money to yourself",
+            );
+        }
+
         if (senderBalance < amount) {
             return await client.sendMessage(
                 roomId,
