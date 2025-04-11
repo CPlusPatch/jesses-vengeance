@@ -14,24 +14,19 @@ const getStealAmount = (): number => {
 export default {
     name: "steal",
     description: "Steal from a user",
-    execute: async (client, roomId, event): Promise<void> => {
-        const {
-            sender,
-            content: { body },
-        } = event;
+    args: [
+        {
+            name: "target",
+            description: "The user to steal from",
+            required: true,
+            type: "user",
+        },
+    ],
+    execute: async (client, roomId, event, args): Promise<void> => {
+        const { sender } = event;
 
-        const [, target] = body.trim().split(" ");
+        const [target] = args as [string];
         const senderBalance = await getUserBalance(client, sender);
-
-        if (!(target && (await client.isUserInRoom(roomId, target)))) {
-            return await client.sendMessage(
-                roomId,
-                "Please provide a target user",
-                {
-                    replyTo: event.eventId,
-                },
-            );
-        }
 
         const hasSucceeded = Math.random() < STEAL_SUCCESS_RATE;
         const targetBalance = await getUserBalance(client, target);

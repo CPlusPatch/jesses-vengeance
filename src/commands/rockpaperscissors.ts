@@ -26,14 +26,28 @@ export default {
     name: "rockpaperscissors",
     description: "Play a game of rock paper scissors",
     aliases: ["rps"],
-    execute: async (client, roomId, event): Promise<void> => {
-        const {
-            sender,
-            content: { body },
-        } = event;
+    args: [
+        {
+            name: "wager",
+            description: "The amount of money to bet on the game",
+            type: "currency",
+        },
+    ],
+    execute: async (client, roomId, event, args): Promise<void> => {
+        const { sender } = event;
 
-        const userWager = Number(body.split(" ")[1]);
+        const [wager] = args;
         const balance = await getUserBalance(client, sender);
+
+        if (wager && Number(wager) > balance) {
+            return await client.sendMessage(
+                roomId,
+                "You don't have enough balance to bet that much",
+                {
+                    replyTo: event.eventId,
+                },
+            );
+        }
 
         const choice = choices[
             Math.floor(Math.random() * choices.length)
@@ -84,16 +98,18 @@ export default {
                     `${message}\n\n\`${userChoice}\` beats \`${choice}\`!`,
                 );
 
-                if (userWager > 0) {
+                if (wager) {
                     await client.sendMessage(
                         roomId,
                         `You won ${formatBalance(
-                            userWager * 2,
-                        )}!\n\nNew balance: ${formatBalance(
-                            balance + userWager,
-                        )}`,
+                            Number(wager) * 2,
+                        )}!\n\nNew balance: ${formatBalance(balance + Number(wager))}`,
                     );
-                    await setUserBalance(client, sender, balance + userWager);
+                    await setUserBalance(
+                        client,
+                        sender,
+                        balance + Number(wager),
+                    );
                 } else {
                     await client.sendMessage(roomId, "You **win**! Whoohoo!");
                 }
@@ -103,16 +119,18 @@ export default {
                     `${message}\n\n\`${userChoice}\` does NOT beat \`${choice}\`!`,
                 );
 
-                if (userWager > 0) {
+                if (wager) {
                     await client.sendMessage(
                         roomId,
                         `You lost ${formatBalance(
-                            userWager,
-                        )}!\n\nNew balance: ${formatBalance(
-                            balance - userWager,
-                        )}`,
+                            Number(wager),
+                        )}!\n\nNew balance: ${formatBalance(balance - Number(wager))}`,
                     );
-                    await setUserBalance(client, sender, balance - userWager);
+                    await setUserBalance(
+                        client,
+                        sender,
+                        balance - Number(wager),
+                    );
                 } else {
                     await client.sendMessage(roomId, "you **LOSE** dumbass");
                 }

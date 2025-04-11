@@ -20,7 +20,11 @@ import {
     pickRandomResponse,
     setCooldown,
 } from "./autoresponder.ts";
-import type { CommandManifest } from "./commands.ts";
+import {
+    type ArgValidationError,
+    type CommandManifest,
+    validateArgs,
+} from "./commands.ts";
 import { config } from "./config.ts";
 
 const credentialsFile = file("credentials.json");
@@ -242,7 +246,20 @@ export class Bot {
             );
 
             if (command) {
-                await command.execute(this, roomId, event);
+                const args = body.split(" ").slice(1);
+
+                if (command.args) {
+                    try {
+                        await validateArgs(this, roomId, args, command.args);
+                    } catch (e) {
+                        const error = e as ArgValidationError;
+                        return await this.sendMessage(roomId, error.message, {
+                            replyTo: eventId,
+                        });
+                    }
+                }
+
+                await command.execute(this, roomId, event, args);
             }
         } else {
             const keyword = detectKeyword(body);

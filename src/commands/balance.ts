@@ -6,13 +6,34 @@ export default {
     name: "balance",
     description: "Check your balance",
     aliases: ["bal"],
-    execute: async (client, roomId, event): Promise<void> => {
+    args: [
+        {
+            name: "command",
+            description: "For admin use only.",
+            type: "string",
+        },
+        {
+            name: "target",
+            description: "The user to perform balance operations on",
+            type: "user",
+        },
+        {
+            name: "amount",
+            description: "The amount of money to set the balance to",
+            type: "currency",
+        },
+    ],
+    execute: async (client, roomId, event, args): Promise<void> => {
         const {
             sender,
             content: { body },
         } = event;
 
-        const [, subCommand, target, operationBalance] = body.trim().split(" ");
+        const [subCommand, target, operationBalance] = args as [
+            string,
+            string,
+            string,
+        ];
         const senderBalance = await getUserBalance(client, sender);
 
         if (subCommand) {

@@ -5,29 +5,24 @@ import { formatBalance } from "../currency.ts";
 export default {
     name: "give",
     description: "Give money to a user",
-    execute: async (client, roomId, event): Promise<void> => {
-        const {
-            sender,
-            content: { body },
-        } = event;
+    args: [
+        {
+            name: "target",
+            description: "The user to give money to",
+            required: true,
+            type: "user",
+        },
+        {
+            name: "amount",
+            description: "The amount of money to give",
+            required: true,
+            type: "currency",
+        },
+    ],
+    execute: async (client, roomId, event, args): Promise<void> => {
+        const { sender } = event;
 
-        const [, target, amountStr] = body.trim().split(" ");
-
-        if (!(target && amountStr)) {
-            return await client.sendMessage(
-                roomId,
-                "Please provide a target and amount",
-                {
-                    replyTo: event.eventId,
-                },
-            );
-        }
-
-        if (!(await client.isUserInRoom(roomId, target))) {
-            return await client.sendMessage(roomId, "Invalid target", {
-                replyTo: event.eventId,
-            });
-        }
+        const [target, amountStr] = args as [string, string];
 
         const amount = Number(amountStr);
         const senderBalance = await getUserBalance(client, sender);
