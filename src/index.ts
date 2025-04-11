@@ -13,7 +13,12 @@ import {
     SimpleFsStorageProvider,
     type TextualMessageEventContent,
 } from "matrix-bot-sdk";
-import { detectKeyword, pickRandomResponse } from "./autoresponder.ts";
+import {
+    detectKeyword,
+    isUnderCooldown,
+    pickRandomResponse,
+    setCooldown,
+} from "./autoresponder.ts";
 import type { CommandManifest } from "./commands.ts";
 import { config } from "./config.ts";
 
@@ -240,9 +245,15 @@ export class Bot {
             const keyword = detectKeyword(body);
 
             if (keyword) {
+                if (await isUnderCooldown(this, roomId)) {
+                    return;
+                }
+
                 await this.sendMessage(roomId, pickRandomResponse(keyword), {
                     replyTo: eventId,
                 });
+
+                await setCooldown(this, roomId, 60);
             }
         }
     }

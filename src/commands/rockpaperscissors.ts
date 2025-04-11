@@ -81,7 +81,7 @@ export default {
             } else if (rules[userChoice].includes(choice)) {
                 await client.sendMessage(
                     roomId,
-                    `${message}\n\`${userChoice}\` beats \`${choice}\`!`,
+                    `${message}\n\n\`${userChoice}\` beats \`${choice}\`!`,
                 );
 
                 if (userWager > 0) {
@@ -100,7 +100,7 @@ export default {
             } else {
                 await client.sendMessage(
                     roomId,
-                    `${message}\n\`${userChoice}\` does NOT beat \`${choice}\`!`,
+                    `${message}\n\n\`${userChoice}\` does NOT beat \`${choice}\`!`,
                 );
 
                 if (userWager > 0) {

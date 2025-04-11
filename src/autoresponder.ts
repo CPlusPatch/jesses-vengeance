@@ -1,3 +1,4 @@
+import type { Bot } from "./index.ts";
 import responses from "./responses.json" with { type: "json" };
 
 export const pickRandomResponse = (key: keyof typeof responses): string => {
@@ -24,4 +25,28 @@ export const detectKeyword = (
     }
 
     return undefined;
+};
+
+export const setCooldown = async (
+    client: Bot,
+    roomId: string,
+    cooldownSecs: number,
+): Promise<void> => {
+    await client.redis.set(
+        `cooldown:${roomId}`,
+        Date.now() + cooldownSecs * 1000,
+    );
+};
+
+export const isUnderCooldown = async (
+    client: Bot,
+    roomId: string,
+): Promise<boolean> => {
+    const cooldown = await client.redis.get(`cooldown:${roomId}`);
+
+    if (cooldown === null) {
+        return false;
+    }
+
+    return Date.now() < Number(cooldown);
 };
