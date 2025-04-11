@@ -16,7 +16,7 @@ export default {
             name: "amount",
             description: "The amount of money to give",
             required: true,
-            type: "currency",
+            type: "currency-nonnegative",
         },
     ],
     execute: async (client, roomId, event, args): Promise<void> => {
@@ -27,16 +27,6 @@ export default {
         const amount = Number(amountStr);
         const senderBalance = await getUserBalance(client, sender);
         const targetBalance = await getUserBalance(client, target);
-
-        if (amount < 0) {
-            return await client.sendMessage(
-                roomId,
-                "Nice try, you can't give negative balance",
-                {
-                    replyTo: event.eventId,
-                },
-            );
-        }
 
         if (senderBalance < amount) {
             return await client.sendMessage(

@@ -30,7 +30,7 @@ export default {
         {
             name: "wager",
             description: "The amount of money to bet on the game",
-            type: "currency",
+            type: "currency-nonnegative",
         },
     ],
     execute: async (client, roomId, event, args): Promise<void> => {

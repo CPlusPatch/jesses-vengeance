@@ -1,3 +1,4 @@
+import consola from "consola";
 import type { Bot } from "./index.ts";
 
 export const DEFAULT_BALANCE = 100;
@@ -22,6 +23,7 @@ export const setUserBalance = async (
     userId: string,
     balance: number,
 ): Promise<void> => {
+    consola.debug(`Setting balance for ${userId} to ${balance}`);
     await client.redis.set(`balance:${userId}`, String(balance));
 };
 
@@ -36,4 +38,8 @@ export const formatBalance = (balance: number): string => {
         .replace("$", "B$");
 
     return `\`${formatted}\``;
+};
+
+export const isValidAmount = (amount: number): boolean => {
+    return amount > 0 && !Number.isNaN(amount);
 };

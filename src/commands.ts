@@ -1,11 +1,12 @@
 import type { MessageEvent, TextualMessageEventContent } from "matrix-bot-sdk";
+import { isValidAmount } from "./currency.ts";
 import type { Bot } from "./index.ts";
 
 export interface Arg {
     name: string;
     description?: string;
     required?: boolean;
-    type: "string" | "user" | "currency" | "number";
+    type: "string" | "user" | "currency" | "currency-nonnegative" | "number";
 }
 
 export interface CommandManifest {
@@ -53,6 +54,9 @@ export const validateUserArg = async (
 export const validateCurrencyArg = (arg: string): boolean =>
     !Number.isNaN(Number(arg.replaceAll("$", "").trim()));
 
+export const validateNonNegativeCurrencyArg = (arg: string): boolean =>
+    isValidAmount(Number(arg.replaceAll("$", "").trim()));
+
 export const validateNumberArg = (arg: string): boolean =>
     !Number.isNaN(Number(arg.trim()));
 
@@ -91,6 +95,9 @@ export const validateArgs = async (
                 break;
             case "string":
                 result = validateStringArg(arg);
+                break;
+            case "currency-nonnegative":
+                result = validateNonNegativeCurrencyArg(arg);
                 break;
         }
 

@@ -24,10 +24,7 @@ export default {
         },
     ],
     execute: async (client, roomId, event, args): Promise<void> => {
-        const {
-            sender,
-            content: { body },
-        } = event;
+        const { sender } = event;
 
         const [subCommand, target, operationBalance] = args as [
             string,
