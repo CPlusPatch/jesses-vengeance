@@ -1,16 +1,18 @@
 import type { CommandManifest } from "../commands.ts";
 import { formatBalance, getUserBalance, setUserBalance } from "../currency.ts";
-import { addOwnedItem, ownsItem, shopItems } from "../shop.ts";
+import { ownsItem, removeOwnedItem, shopItems } from "../shop.ts";
+
+const RESALE_PERCENTAGE = 0.7;
 
 export default {
-    name: "buy",
-    description: "Buy an item from the shop",
+    name: "sell",
+    description: "Sell an item to the shop",
     args: [
         {
             name: "itemNumber",
             type: "number",
             required: true,
-            description: "The number of the item to buy",
+            description: "The number of the item to sell",
         },
     ],
     execute: async (client, roomId, event, args): Promise<void> => {
@@ -27,8 +29,8 @@ export default {
         }
 
         // Check if the user has already bought the item
-        if (await ownsItem(client, sender, shopItem.id)) {
-            await client.sendMessage(roomId, "You already have this item!", {
+        if (!(await ownsItem(client, sender, shopItem.id))) {
+            await client.sendMessage(roomId, "You don't have this item!", {
                 replyTo: event.eventId,
             });
             return;
@@ -36,25 +38,16 @@ export default {
 
         const balance = await getUserBalance(client, sender);
 
-        if (balance < shopItem.price) {
-            await client.sendMessage(
-                roomId,
-                "You don't have enough balance to buy this item",
-                {
-                    replyTo: event.eventId,
-                },
-            );
-            return;
-        }
+        const newBalance = balance + shopItem.price * RESALE_PERCENTAGE;
 
-        await setUserBalance(client, sender, balance - shopItem.price);
-        await addOwnedItem(client, sender, shopItem);
+        await setUserBalance(client, sender, newBalance);
+        await removeOwnedItem(client, sender, shopItem.id);
 
         await client.sendMessage(
             roomId,
-            `You have bought "${shopItem.name}" for ${formatBalance(
-                shopItem.price,
-            )}!\n\nYour new balance is ${formatBalance(balance - shopItem.price)}`,
+            `You have sold "${shopItem.name}" for ${formatBalance(
+                shopItem.price * RESALE_PERCENTAGE,
+            )}!\n\nYour new balance is ${formatBalance(newBalance)}`,
             {
                 replyTo: event.eventId,
             },
