@@ -11,3 +11,8 @@ export interface CommandManifest {
         event: MessageEvent<TextualMessageEventContent>,
     ) => void | Promise<void>;
 }
+
+export const getArg = (body: string, index: number): string | undefined => {
+    const args = body.split(" ");
+    return args[index];
+};

@@ -12,11 +12,10 @@ export default {
             content: { body },
         } = event;
 
-        const eventualSubCommand = body.trim().split(" ")[1];
+        const [, subCommand, target, operationBalance] = body.trim().split(" ");
+        const senderBalance = await getUserBalance(client, sender);
 
-        if (eventualSubCommand && config.users.admin.includes(sender)) {
-            const target = body.trim().split(" ")[2];
-
+        if (subCommand) {
             if (!target) {
                 await client.sendMessage(
                     roomId,
@@ -28,9 +27,19 @@ export default {
                 return;
             }
 
-            switch (eventualSubCommand) {
+            switch (subCommand) {
                 case "set": {
-                    const balance = Number(body.trim().split(" ")[3]);
+                    if (!config.users.admin.includes(sender)) {
+                        return await client.sendMessage(
+                            roomId,
+                            "You are not authorized to use this command",
+                            {
+                                replyTo: event.eventId,
+                            },
+                        );
+                    }
+
+                    const balance = Number(operationBalance);
 
                     await setUserBalance(client, target, balance);
 
@@ -41,17 +50,17 @@ export default {
                             replyTo: event.eventId,
                         },
                     );
+
+                    return;
                 }
             }
 
             return;
         }
 
-        const balance = await getUserBalance(client, sender);
-
         await client.sendMessage(
             roomId,
-            `Your balance is ${formatBalance(balance)}`,
+            `Your balance is ${formatBalance(senderBalance)}`,
             {
                 replyTo: event.eventId,
             },
