@@ -1,5 +1,6 @@
 import type { CommandManifest } from "../commands.ts";
 import { formatBalance, getUserBalance, setUserBalance } from "../currency.ts";
+import { ownsItem } from "../shop.ts";
 
 const STEAL_SUCCESS_RATE = 0.5;
 const STEAL_AMOUNT_MIN_PERCENT = 0.01;
@@ -39,7 +40,10 @@ export default {
             return;
         }
 
-        const hasSucceeded = Math.random() < STEAL_SUCCESS_RATE;
+        const hasVan = await ownsItem(client, sender, "getaway-van");
+
+        const hasSucceeded =
+            Math.random() < (hasVan ? 0.7 : STEAL_SUCCESS_RATE);
         const targetBalance = await getUserBalance(client, target);
 
         if (hasSucceeded) {
@@ -64,9 +68,14 @@ export default {
             );
         } else {
             const punishment = getStealAmount() * senderBalance;
+            const towCharge = punishment * 0.4;
 
-            const newSenderBalance = senderBalance - punishment;
+            let newSenderBalance = senderBalance - punishment;
             const newTargetBalance = targetBalance + punishment;
+
+            if (hasVan) {
+                newSenderBalance -= towCharge;
+            }
 
             await setUserBalance(client, sender, newSenderBalance);
             await setUserBalance(client, target, newTargetBalance);
@@ -77,7 +86,11 @@ export default {
                     punishment,
                 )} to ${target} !\n\n${target} balance: ${formatBalance(
                     newTargetBalance,
-                )}\n\n${sender} balance: ${formatBalance(newSenderBalance)}`,
+                )}\n\n${sender} balance: ${formatBalance(newSenderBalance)}${
+                    hasVan
+                        ? `\n\nVan towed! Tow charge: ${formatBalance(towCharge)}.`
+                        : ""
+                }`,
                 {
                     replyTo: event.eventId,
                 },

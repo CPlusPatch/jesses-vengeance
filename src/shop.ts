@@ -17,6 +17,13 @@ export const shopItems: ShopItem[] = [
         description: "Dav's favourite object!",
     },
     {
+        id: "getaway-van",
+        name: "Getaway van",
+        price: 200,
+        description:
+            "Increases your odds of stealing, but if you get caught, you'll get towed!",
+    },
+    {
         id: "nexy",
         name: "Nexy",
         price: 300,
@@ -76,4 +83,13 @@ export const removeOwnedItem = async (
     const currentItems = await getOwnedItems(client, userId);
     const updatedItems = currentItems.filter((item) => item.id !== itemId);
     await setOwnedItems(client, userId, updatedItems);
+};
+
+export const ownsItem = async (
+    client: Bot,
+    userId: string,
+    itemId: string,
+): Promise<boolean> => {
+    const currentItems = await getOwnedItems(client, userId);
+    return currentItems.some((item) => item.id === itemId);
 };
