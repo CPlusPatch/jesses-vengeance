@@ -20,7 +20,7 @@ export const shopItems: ShopItem[] = [
         id: "nexy",
         name: "Nexy",
         price: 300,
-        description: "The best friend a bitch could ask for",
+        description: "The best friend a bit­­ch could ask for",
     },
     {
         id: "one-evening-with-jesse",
