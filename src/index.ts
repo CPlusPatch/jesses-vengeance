@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { input } from "@inquirer/prompts";
 import { createClient } from "@redis/client";
 import { env, file, Glob, write } from "bun";
+import consola from "consola";
 import MarkdownIt from "markdown-it";
 import {
     AutojoinRoomsMixin,
@@ -21,7 +22,6 @@ import {
 } from "./autoresponder.ts";
 import type { CommandManifest } from "./commands.ts";
 import { config } from "./config.ts";
-import consola from "consola";
 
 const credentialsFile = file("credentials.json");
 
@@ -259,6 +259,17 @@ export class Bot {
                 await setCooldown(this, roomId, 60);
             }
         }
+    }
+
+    public async isUserInRoom(
+        roomId: string,
+        userId: string,
+    ): Promise<boolean> {
+        return (
+            (await this.client.getJoinedRoomMembers(roomId)).find(
+                (member) => member === userId,
+            ) !== undefined
+        );
     }
 
     private async loadCredentials(): Promise<{

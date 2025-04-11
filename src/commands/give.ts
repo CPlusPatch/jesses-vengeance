@@ -23,6 +23,12 @@ export default {
             );
         }
 
+        if (!(await client.isUserInRoom(roomId, target))) {
+            return await client.sendMessage(roomId, "Invalid target", {
+                replyTo: event.eventId,
+            });
+        }
+
         const amount = Number(amountStr);
         const senderBalance = await getUserBalance(client, sender);
         const targetBalance = await getUserBalance(client, target);

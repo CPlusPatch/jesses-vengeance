@@ -23,7 +23,7 @@ export default {
         const [, target] = body.trim().split(" ");
         const senderBalance = await getUserBalance(client, sender);
 
-        if (!target) {
+        if (!(target && (await client.isUserInRoom(roomId, target)))) {
             return await client.sendMessage(
                 roomId,
                 "Please provide a target user",
