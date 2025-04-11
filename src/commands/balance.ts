@@ -82,7 +82,12 @@ export default {
                     await client.sendMessage(
                         roomId,
                         `Removed ${target} 's balance`,
+                        {
+                            replyTo: event.eventId,
+                        },
                     );
+
+                    return;
                 }
             }
 
