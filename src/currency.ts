@@ -33,6 +33,13 @@ export const setUserBalance = async (
     await client.redis.zAdd(BALANCES_KEY, { score: balance, value: userId });
 };
 
+export const deleteUserBalance = async (
+    client: Bot,
+    userId: string,
+): Promise<void> => {
+    await client.redis.zRem(BALANCES_KEY, userId);
+};
+
 export const formatBalance = (balance: number): string => {
     const formatted = Intl.NumberFormat("en-US", {
         style: "currency",

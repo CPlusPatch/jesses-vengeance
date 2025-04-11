@@ -1,6 +1,11 @@
 import type { CommandManifest } from "../commands.ts";
 import { config } from "../config.ts";
-import { formatBalance, getUserBalance, setUserBalance } from "../currency.ts";
+import {
+    deleteUserBalance,
+    formatBalance,
+    getUserBalance,
+    setUserBalance,
+} from "../currency.ts";
 
 export default {
     name: "balance",
@@ -45,18 +50,18 @@ export default {
                 return;
             }
 
+            if (!config.users.admin.includes(sender)) {
+                return await client.sendMessage(
+                    roomId,
+                    "You are not authorized to use this command",
+                    {
+                        replyTo: event.eventId,
+                    },
+                );
+            }
+
             switch (subCommand) {
                 case "set": {
-                    if (!config.users.admin.includes(sender)) {
-                        return await client.sendMessage(
-                            roomId,
-                            "You are not authorized to use this command",
-                            {
-                                replyTo: event.eventId,
-                            },
-                        );
-                    }
-
                     const balance = Number(operationBalance);
 
                     await setUserBalance(client, target, balance);
@@ -70,6 +75,14 @@ export default {
                     );
 
                     return;
+                }
+                case "rm": {
+                    await deleteUserBalance(client, target);
+
+                    await client.sendMessage(
+                        roomId,
+                        `Removed ${target} 's balance`,
+                    );
                 }
             }
 
