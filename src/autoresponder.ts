@@ -1,6 +1,8 @@
 import type { Bot } from "./index.ts";
 import responses from "./responses.json" with { type: "json" };
 
+const COOLDOWN_KEY = "cooldown";
+
 export const pickRandomResponse = (key: keyof typeof responses): string => {
     const availableResponses = responses[key];
 
@@ -32,21 +34,21 @@ export const setCooldown = async (
     roomId: string,
     cooldownSecs: number,
 ): Promise<void> => {
-    await client.redis.set(
-        `cooldown:${roomId}`,
-        Date.now() + cooldownSecs * 1000,
-    );
+    await client.redis.zAdd(COOLDOWN_KEY, {
+        score: Date.now() + cooldownSecs * 1000,
+        value: roomId,
+    });
 };
 
 export const isUnderCooldown = async (
     client: Bot,
     roomId: string,
 ): Promise<boolean> => {
-    const cooldown = await client.redis.get(`cooldown:${roomId}`);
+    const cooldown = await client.redis.zScore(COOLDOWN_KEY, roomId);
 
     if (cooldown === null) {
         return false;
     }
 
-    return Date.now() < Number(cooldown);
+    return Date.now() < cooldown;
 };
