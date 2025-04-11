@@ -1,7 +1,7 @@
 import type { CommandManifest } from "../commands.ts";
 import { formatBalance, getUserBalance, setUserBalance } from "../currency.ts";
 
-const STEAL_SUCCESS_RATE = 1.0;
+const STEAL_SUCCESS_RATE = 0.5;
 const STEAL_AMOUNT_MIN_PERCENT = 0.01;
 const STEAL_AMOUNT_MAX_PERCENT = 0.5;
 const getStealAmount = (): number => {
