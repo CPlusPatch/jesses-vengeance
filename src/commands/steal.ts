@@ -28,6 +28,17 @@ export default {
         const [target] = args as [string];
         const senderBalance = await getUserBalance(client, sender);
 
+        if (senderBalance < 10) {
+            await client.sendMessage(
+                roomId,
+                "You don't have enough balance to steal lol, broke bum ass, try again later",
+                {
+                    replyTo: event.eventId,
+                },
+            );
+            return;
+        }
+
         const hasSucceeded = Math.random() < STEAL_SUCCESS_RATE;
         const targetBalance = await getUserBalance(client, target);
 
