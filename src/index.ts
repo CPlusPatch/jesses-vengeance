@@ -223,7 +223,7 @@ export class Bot {
             return;
         }
 
-        if (msgtype === "m.notice") {
+        if (msgtype === "m.notice" || !body) {
             return;
         }
 
