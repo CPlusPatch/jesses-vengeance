@@ -77,7 +77,7 @@ export default {
             const message = `You chose \`${userChoice}\`, I chose \`${choice}\`!`;
 
             if (userChoice === choice) {
-                await client.sendMessage(roomId, "It's a tie!");
+                await client.sendMessage(roomId, `${message}\n\nIt's a tie!`);
             } else if (rules[userChoice].includes(choice)) {
                 await client.sendMessage(
                     roomId,
