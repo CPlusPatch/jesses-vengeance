@@ -65,7 +65,8 @@ export default {
             "m.room.member",
             await client.client.getUserId(),
             {
-                displayname,
+                // Insert U+00AD to prevent disambiguation
+                displayname: displayname.split("").join("­"),
                 avatar_url,
                 membership: "join",
             },
