@@ -7,9 +7,15 @@ export default defineCommand({
         const commands = client.commands
             .map(
                 (c) =>
-                    `- \`${c.name}\` ${
+                    `- **${c.name}**${
                         (c.aliases?.length ?? 0) > 0
-                            ? `(\`${c.aliases?.join("`, `")}\`)`
+                            ? ` (${c.aliases?.map((a) => `**${a}**`).join(", ")})`
+                            : ""
+                    } ${
+                        Object.keys(c.args ?? {}).length > 0
+                            ? `${Object.keys(c.args ?? {})
+                                  .map((k) => `\`${k}\``)
+                                  .join(", ")}`
                             : ""
                     } - ${c.description}`,
             )

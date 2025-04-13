@@ -26,17 +26,25 @@ export default defineCommand({
         const senderBalance = await sender.getBalance();
 
         if (sender.mxid === target.mxid) {
-            return await client.sendMessage(
+            await client.sendMessage(
                 roomId,
                 "You can't give money to yourself",
+                {
+                    replyTo: event.eventId,
+                },
             );
+            return;
         }
 
         if (senderBalance < amount) {
-            return await client.sendMessage(
+            await client.sendMessage(
                 roomId,
                 `You don't have enough balance to give ${formatBalance(amount)}`,
+                {
+                    replyTo: event.eventId,
+                },
             );
+            return;
         }
 
         await sender.addBalance(-amount);
