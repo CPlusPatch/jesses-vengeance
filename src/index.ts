@@ -20,6 +20,7 @@ import {
     pickRandomResponse,
     setCooldown,
 } from "./autoresponder.ts";
+import { User } from "./classes/user.ts";
 import {
     type CommandManifest,
     type PossibleArgs,
@@ -58,17 +59,21 @@ export class Bot {
         AutojoinRoomsMixin.setupOnClient(this.client);
         consola.info("AutojoinRoomsMixin setup!");
 
-        const handleMessage = (roomId: string, e: unknown): Promise<void> => {
+        const handleMessage = async (
+            roomId: string,
+            e: unknown,
+        ): Promise<void> => {
             try {
                 return this.handleMessage(roomId, new MessageEvent(e));
             } catch (e) {
-                return this.sendMessage(
+                await this.sendMessage(
                     roomId,
                     `## Exeption while running command:\n\n\`\`\`\n${e}\n\`\`\``,
                     {
                         replyTo: (e as { event_id: string }).event_id,
                     },
                 );
+                return;
             }
         };
 
@@ -108,7 +113,7 @@ export class Bot {
             replyTo?: string;
             edit?: string;
         },
-    ): Promise<void> {
+    ): Promise<string> {
         const md = new MarkdownIt();
         let parsed = md.render(message);
 
@@ -124,7 +129,7 @@ export class Bot {
             }
         }
 
-        await this.client.sendMessage(roomId, {
+        return await this.client.sendMessage(roomId, {
             msgtype: "m.notice",
             body: message,
             format: "org.matrix.custom.html",
@@ -214,16 +219,33 @@ export class Bot {
         event: MessageEvent<TextualMessageEventContent>,
     ): Promise<void> {
         const {
-            sender,
             content: { body, msgtype },
             eventId,
         } = event;
+        const sender = new User(event.sender, this);
 
-        if ((await this.client.getUserId()) === sender) {
+        if ((await this.client.getUserId()) === sender.mxid) {
             return;
         }
 
         if (msgtype === "m.notice" || !body) {
+            return;
+        }
+
+        const banDetails = await sender.isBanned();
+
+        if (banDetails) {
+            await this.sendMessage(
+                roomId,
+                `You are banned from this bot.${
+                    banDetails.reason
+                        ? `\n\nReason: \`${banDetails.reason}\``
+                        : ""
+                }`,
+                {
+                    replyTo: eventId,
+                },
+            );
             return;
         }
 
@@ -237,7 +259,9 @@ export class Bot {
                 return;
             }
 
-            if (config.users.banned.some((b) => new Glob(b).match(sender))) {
+            if (
+                config.users.banned.some((b) => new Glob(b).match(sender.mxid))
+            ) {
                 await this.sendMessage(roomId, "🖕", {
                     replyTo: eventId,
                 });
@@ -260,13 +284,14 @@ export class Bot {
                         event,
                     });
                 } catch (e) {
-                    return await this.sendMessage(
+                    await this.sendMessage(
                         roomId,
-                        `## Error while parsing arguments:\n\n${(e as Error).message}`,
+                        `**Error while parsing arguments:**\n\n${(e as Error).message}`,
                         {
                             replyTo: eventId,
                         },
                     );
+                    return;
                 }
 
                 consola.debug(
@@ -276,6 +301,7 @@ export class Bot {
                 await command.execute(this, parsedArgs, {
                     roomId,
                     event,
+                    sender,
                 });
             }
         } else {

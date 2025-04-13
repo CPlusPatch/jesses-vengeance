@@ -45,13 +45,14 @@ export default defineCommand({
         }
 
         if (wager && wager > balance) {
-            return await client.sendMessage(
+            await client.sendMessage(
                 roomId,
                 "You don't have enough balance to bet that much",
                 {
                     replyTo: event.eventId,
                 },
             );
+            return;
         }
 
         const choice = choices[

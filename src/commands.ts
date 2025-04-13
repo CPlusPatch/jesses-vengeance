@@ -5,6 +5,7 @@ import type {
     StringArgument,
     UserArgument,
 } from "./classes/arguments.ts";
+import type { User } from "./classes/user.ts";
 import type { Bot } from "./index.ts";
 
 export type PossibleArgs =
@@ -35,6 +36,7 @@ export interface CommandManifest<
         context: {
             roomId: string;
             event: MessageEvent<TextualMessageEventContent>;
+            sender: User;
         },
     ) => void | Promise<void>;
 }
