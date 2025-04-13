@@ -269,23 +269,6 @@ export class Bot {
             return;
         }
 
-        const banDetails = await sender.isBanned();
-
-        if (banDetails) {
-            await this.sendMessage(
-                roomId,
-                `You are banned from this bot.${
-                    banDetails.reason
-                        ? `\n\nReason: \`${banDetails.reason}\``
-                        : ""
-                }`,
-                {
-                    replyTo: eventId,
-                },
-            );
-            return;
-        }
-
         if (body?.trim().startsWith(config.commands.prefix)) {
             const commandName = body
                 .split(" ")[0]
@@ -302,6 +285,23 @@ export class Bot {
                 await this.sendMessage(roomId, "🖕", {
                     replyTo: eventId,
                 });
+                return;
+            }
+
+            const banDetails = await sender.isBanned();
+
+            if (banDetails) {
+                await this.sendMessage(
+                    roomId,
+                    `You are banned from this bot.${
+                        banDetails.reason
+                            ? `\n\nReason: \`${banDetails.reason}\``
+                            : ""
+                    }`,
+                    {
+                        replyTo: eventId,
+                    },
+                );
                 return;
             }
 
