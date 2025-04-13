@@ -1,34 +1,31 @@
-import type { CommandManifest } from "../commands.ts";
-import { getUserBalance, setUserBalance } from "../currency.ts";
+import { CurrencyArgument } from "../classes/arguments.ts";
+import { UserArgument } from "../classes/arguments.ts";
+import { User } from "../classes/user.ts";
+import { defineCommand } from "../commands.ts";
 import { formatBalance } from "../currency.ts";
 
-export default {
+export default defineCommand({
     name: "give",
     description: "Give money to a user",
-    args: [
-        {
-            name: "target",
+    args: {
+        target: new UserArgument("target", true, {
             description: "The user to give money to",
-            required: true,
-            type: "user",
-        },
-        {
-            name: "amount",
+        }),
+        amount: new CurrencyArgument("amount", true, {
             description: "The amount of money to give",
-            required: true,
-            type: "currency-nonnegative",
-        },
-    ],
-    execute: async (client, roomId, event, args): Promise<void> => {
-        const { sender } = event;
+            min: 0,
+        }),
+    },
+    execute: async (
+        client,
+        { target, amount },
+        { roomId, event },
+    ): Promise<void> => {
+        const sender = new User(event.sender, client);
 
-        const [target, amountStr] = args as [string, string];
+        const senderBalance = await sender.getBalance();
 
-        const amount = Number(amountStr);
-        const senderBalance = await getUserBalance(client, sender);
-        const targetBalance = await getUserBalance(client, target);
-
-        if (sender === target) {
+        if (sender.mxid === target.mxid) {
             return await client.sendMessage(
                 roomId,
                 "You can't give money to yourself",
@@ -42,15 +39,15 @@ export default {
             );
         }
 
-        await setUserBalance(client, sender, senderBalance - amount);
-        await setUserBalance(client, target, targetBalance + amount);
+        await sender.addBalance(-amount);
+        await target.addBalance(amount);
 
         await client.sendMessage(
             roomId,
-            `Gave ${formatBalance(amount)} to ${target} !`,
+            `Gave ${formatBalance(amount)} to ${target.mxid}!`,
             {
                 replyTo: event.eventId,
             },
         );
     },
-} satisfies CommandManifest;
+});

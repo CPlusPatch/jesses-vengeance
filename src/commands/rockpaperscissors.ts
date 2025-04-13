@@ -1,6 +1,8 @@
 import consola from "consola";
-import type { CommandManifest } from "../commands.ts";
-import { formatBalance, getUserBalance, setUserBalance } from "../currency.ts";
+import { CurrencyArgument } from "../classes/arguments.ts";
+import { User } from "../classes/user.ts";
+import { defineCommand } from "../commands.ts";
+import { formatBalance } from "../currency.ts";
 
 const choices = [
     "rock",
@@ -23,28 +25,26 @@ const rules = {
     "matt damon": ["rock", "nexy"],
 };
 
-export default {
+export default defineCommand({
     name: "rockpaperscissors",
     description: "Play a game of rock paper scissors",
     aliases: ["rps"],
-    args: [
-        {
-            name: "wager",
+    args: {
+        wager: new CurrencyArgument("wager", false, {
             description: "The amount of money to bet on the game",
-            type: "currency-nonnegative",
-        },
-    ],
-    execute: async (client, roomId, event, args): Promise<void> => {
-        const { sender } = event;
+            min: 0,
+        }),
+    },
+    execute: async (client, { wager }, { roomId, event }): Promise<void> => {
+        const sender = new User(event.sender, client);
 
-        const [wager] = args;
-        const balance = await getUserBalance(client, sender);
+        const balance = await sender.getBalance();
 
         if (wager) {
             consola.debug(`${sender} is betting ${wager} on rockpaperscissors`);
         }
 
-        if (wager && Number(wager) > balance) {
+        if (wager && wager > balance) {
             return await client.sendMessage(
                 roomId,
                 "You don't have enough balance to bet that much",
@@ -76,7 +76,7 @@ export default {
                 event_id: string;
             },
         ): Promise<void> => {
-            if (event.sender !== sender) {
+            if (event.sender !== sender.mxid) {
                 return;
             }
 
@@ -104,16 +104,12 @@ export default {
                 );
 
                 if (wager) {
+                    const newBalance = await sender.addBalance(wager * 2);
                     await client.sendMessage(
                         roomId,
                         `You won ${formatBalance(
-                            Number(wager) * 2,
-                        )}!\n\nNew balance: ${formatBalance(balance + Number(wager))}`,
-                    );
-                    await setUserBalance(
-                        client,
-                        sender,
-                        balance + Number(wager),
+                            wager,
+                        )}!\n\nNew balance: ${formatBalance(newBalance)}`,
                     );
                 } else {
                     await client.sendMessage(roomId, "You **win**! Whoohoo!");
@@ -125,16 +121,13 @@ export default {
                 );
 
                 if (wager) {
+                    const newBalance = await sender.addBalance(-wager);
+
                     await client.sendMessage(
                         roomId,
                         `You lost ${formatBalance(
-                            Number(wager),
-                        )}!\n\nNew balance: ${formatBalance(balance - Number(wager))}`,
-                    );
-                    await setUserBalance(
-                        client,
-                        sender,
-                        balance - Number(wager),
+                            wager,
+                        )}!\n\nNew balance: ${formatBalance(newBalance)}`,
                     );
                 } else {
                     await client.sendMessage(roomId, "you **LOSE** dumbass");
@@ -146,4 +139,4 @@ export default {
 
         client.client.on("room.message", callback);
     },
-} satisfies CommandManifest;
+});

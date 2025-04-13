@@ -1,6 +1,8 @@
-import type { CommandManifest } from "../commands.ts";
-import { formatBalance, getUserBalance, setUserBalance } from "../currency.ts";
-import { ownsItem } from "../shop.ts";
+import { UserArgument } from "../classes/arguments.ts";
+import { User } from "../classes/user.ts";
+import { defineCommand } from "../commands.ts";
+import { formatBalance } from "../currency.ts";
+import { type ShopItem, shopItems } from "../shop.ts";
 
 const STEAL_SUCCESS_RATE = 0.5;
 const STEAL_AMOUNT_MIN_PERCENT = 0.01;
@@ -12,27 +14,23 @@ const getStealAmount = (): number => {
     );
 };
 
-export default {
+export default defineCommand({
     name: "steal",
     description: "Steal from a user",
-    args: [
-        {
-            name: "target",
+    args: {
+        target: new UserArgument("target", true, {
             description: "The user to steal from",
-            required: true,
-            type: "user",
-        },
-    ],
-    execute: async (client, roomId, event, args): Promise<void> => {
-        const { sender } = event;
+        }),
+    },
+    execute: async (client, { target }, { roomId, event }): Promise<void> => {
+        const sender = new User(event.sender, client);
 
-        const [target] = args as [string];
-        const senderBalance = await getUserBalance(client, sender);
+        const senderBalance = await sender.getBalance();
 
         if (senderBalance < 10) {
             await client.sendMessage(
                 roomId,
-                "You don't have enough balance to steal lol, broke bum ass, try again later",
+                "You don't have enough balance to steal lol, broke ass, try again later",
                 {
                     replyTo: event.eventId,
                 },
@@ -40,20 +38,19 @@ export default {
             return;
         }
 
-        const hasVan = await ownsItem(client, sender, "getaway-van");
+        const hasVan = await sender.ownsItem(
+            shopItems.find((item) => item.id === "getaway-van") as ShopItem,
+        );
 
         const hasSucceeded =
             Math.random() < (hasVan ? 0.7 : STEAL_SUCCESS_RATE);
-        const targetBalance = await getUserBalance(client, target);
+        const targetBalance = await target.getBalance();
 
         if (hasSucceeded) {
             const stolenAmount = getStealAmount() * targetBalance;
 
-            const newSenderBalance = senderBalance + stolenAmount;
-            const newTargetBalance = targetBalance - stolenAmount;
-
-            await setUserBalance(client, sender, newSenderBalance);
-            await setUserBalance(client, target, newTargetBalance);
+            const newSenderBalance = await sender.addBalance(stolenAmount);
+            const newTargetBalance = await target.addBalance(-stolenAmount);
 
             await client.sendMessage(
                 roomId,
@@ -70,15 +67,12 @@ export default {
             const punishment = getStealAmount() * senderBalance;
             const towCharge = punishment * 0.4;
 
-            let newSenderBalance = senderBalance - punishment;
-            const newTargetBalance = targetBalance + punishment;
+            let newSenderBalance = await sender.addBalance(-punishment);
+            const newTargetBalance = await target.addBalance(punishment);
 
             if (hasVan) {
-                newSenderBalance -= towCharge;
+                newSenderBalance = await sender.addBalance(-towCharge);
             }
-
-            await setUserBalance(client, sender, newSenderBalance);
-            await setUserBalance(client, target, newTargetBalance);
 
             await client.sendMessage(
                 roomId,
@@ -97,4 +91,4 @@ export default {
             );
         }
     },
-} satisfies CommandManifest;
+});

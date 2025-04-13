@@ -1,9 +1,9 @@
-import type { CommandManifest } from "../commands.ts";
+import { defineCommand } from "../commands.ts";
 
-export default {
+export default defineCommand({
     name: "help",
     description: "List all commands",
-    execute: async (client, roomId, event): Promise<void> => {
+    execute: async (client, _args, { roomId, event }): Promise<void> => {
         const commands = client.commands
             .map(
                 (c) =>
@@ -22,4 +22,4 @@ export default {
             },
         );
     },
-} satisfies CommandManifest;
+});

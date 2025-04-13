@@ -1,18 +1,17 @@
-import type { CommandManifest } from "../commands.ts";
+import { UserArgument } from "../classes/arguments.ts";
+import { defineCommand } from "../commands.ts";
 import { config } from "../config.ts";
 
-export default {
+export default defineCommand({
     name: "mog",
     description: "Become anyone!",
-    args: [
-        {
-            name: "target",
-            description: "The user to become",
-            type: "user",
-        },
-    ],
-    execute: async (client, roomId, event, args): Promise<void> => {
-        const [target] = args;
+    args: {
+        target: new UserArgument("target", false, {
+            description: "User to impersonate",
+            canBeOutsideRoom: true,
+        }),
+    },
+    execute: async (client, { target }, { roomId, event }): Promise<void> => {
         const { sender } = event;
 
         if (!config.users.admin.includes(sender)) {
@@ -47,9 +46,7 @@ export default {
             return;
         }
 
-        const profile = await client.client
-            .getUserProfile(target)
-            .catch(() => null);
+        const profile = await target.getProfile().catch(() => null);
 
         if (!profile) {
             await client.sendMessage(roomId, "User does not have a profile", {
@@ -66,10 +63,10 @@ export default {
             await client.client.getUserId(),
             {
                 // Insert U+00AD to prevent disambiguation
-                displayname: displayname.split("").join("­"),
+                displayname: displayname?.split("").join("­"),
                 avatar_url,
                 membership: "join",
             },
         );
     },
-} satisfies CommandManifest;
+});

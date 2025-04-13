@@ -1,42 +1,30 @@
-import type { CommandManifest } from "../commands.ts";
-import { formatBalance, getUserBalance, setUserBalance } from "../currency.ts";
-import { addOwnedItem, ownsItem, shopItems } from "../shop.ts";
+import { ShopItemArgument } from "../classes/arguments.ts";
+import { User } from "../classes/user.ts";
+import { defineCommand } from "../commands.ts";
+import { formatBalance } from "../currency.ts";
 
-export default {
+export default defineCommand({
     name: "buy",
     description: "Buy an item from the shop",
-    args: [
-        {
-            name: "itemNumber",
-            type: "number",
-            required: true,
-            description: "The number of the item to buy",
-        },
-    ],
-    execute: async (client, roomId, event, args): Promise<void> => {
-        const { sender } = event;
-
-        const [itemNumber] = args;
-        const shopItem = shopItems[Number(itemNumber) - 1];
-
-        if (!shopItem) {
-            await client.sendMessage(roomId, "Invalid item number", {
-                replyTo: event.eventId,
-            });
-            return;
-        }
+    args: {
+        item: new ShopItemArgument("item", true, {
+            description: "The item to buy",
+        }),
+    },
+    execute: async (client, { item }, { roomId, event }): Promise<void> => {
+        const sender = new User(event.sender, client);
 
         // Check if the user has already bought the item
-        if (await ownsItem(client, sender, shopItem.id)) {
+        if (await sender.ownsItem(item)) {
             await client.sendMessage(roomId, "You already have this item!", {
                 replyTo: event.eventId,
             });
             return;
         }
 
-        const balance = await getUserBalance(client, sender);
+        const balance = await sender.getBalance();
 
-        if (balance < shopItem.price) {
+        if (balance < item.price) {
             await client.sendMessage(
                 roomId,
                 "You don't have enough balance to buy this item",
@@ -47,17 +35,17 @@ export default {
             return;
         }
 
-        await setUserBalance(client, sender, balance - shopItem.price);
-        await addOwnedItem(client, sender, shopItem);
+        const newBalance = await sender.addBalance(-item.price);
+        await sender.addOwnedItem(item);
 
         await client.sendMessage(
             roomId,
-            `You have bought "${shopItem.name}" for ${formatBalance(
-                shopItem.price,
-            )}!\n\nYour new balance is ${formatBalance(balance - shopItem.price)}`,
+            `You have bought "${item.name}" for ${formatBalance(
+                item.price,
+            )}!\n\nYour new balance is ${formatBalance(newBalance)}`,
             {
                 replyTo: event.eventId,
             },
         );
     },
-} satisfies CommandManifest;
+});

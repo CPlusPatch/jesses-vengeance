@@ -1,11 +1,11 @@
-import type { CommandManifest } from "../commands.ts";
+import { defineCommand } from "../commands.ts";
 import { formatBalance, getTopUsers } from "../currency.ts";
 
-export default {
+export default defineCommand({
     name: "leaderboard",
     description: "Show the top 10 users by balance",
     aliases: ["lb"],
-    execute: async (client, roomId, event): Promise<void> => {
+    execute: async (client, _args, { roomId, event }): Promise<void> => {
         const leaderboard = await getTopUsers(client);
 
         await client.sendMessage(
@@ -16,4 +16,4 @@ export default {
             },
         );
     },
-} satisfies CommandManifest;
+});

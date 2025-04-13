@@ -1,56 +1,46 @@
-import type { CommandManifest } from "../commands.ts";
-import { formatBalance, getUserBalance, setUserBalance } from "../currency.ts";
-import { ownsItem, removeOwnedItem, shopItems } from "../shop.ts";
+import { ShopItemArgument } from "../classes/arguments.ts";
+import { User } from "../classes/user.ts";
+import { defineCommand } from "../commands.ts";
+import { formatBalance } from "../currency.ts";
 
 const RESALE_PERCENTAGE = 0.7;
 
-export default {
+export default defineCommand({
     name: "sell",
     description: "Sell an item to the shop",
-    args: [
-        {
-            name: "itemNumber",
-            type: "number",
-            required: true,
-            description: "The number of the item to sell",
-        },
-    ],
-    execute: async (client, roomId, event, args): Promise<void> => {
-        const { sender } = event;
-
-        const [itemNumber] = args;
-        const shopItem = shopItems[Number(itemNumber) - 1];
-
-        if (!shopItem) {
-            await client.sendMessage(roomId, "Invalid item number", {
-                replyTo: event.eventId,
-            });
-            return;
-        }
+    args: {
+        item: new ShopItemArgument("item", true, {
+            description: "The item to sell",
+        }),
+    },
+    execute: async (client, { item }, { roomId, event }): Promise<void> => {
+        const sender = new User(event.sender, client);
 
         // Check if the user has already bought the item
-        if (!(await ownsItem(client, sender, shopItem.id))) {
+        if (!(await sender.ownsItem(item))) {
             await client.sendMessage(roomId, "You don't have this item!", {
                 replyTo: event.eventId,
             });
             return;
         }
 
-        const balance = await getUserBalance(client, sender);
+        const balance = await sender.getBalance();
 
-        const newBalance = balance + shopItem.price * RESALE_PERCENTAGE;
+        const price = item.price * RESALE_PERCENTAGE;
 
-        await setUserBalance(client, sender, newBalance);
-        await removeOwnedItem(client, sender, shopItem.id);
+        const newBalance = await sender.addBalance(price);
+        await sender.removeOwnedItem(item);
 
         await client.sendMessage(
             roomId,
-            `You have sold "${shopItem.name}" for ${formatBalance(
-                shopItem.price * RESALE_PERCENTAGE,
-            )}!\n\nYour new balance is ${formatBalance(newBalance)}`,
+            `You have sold "${item.name}" for ${formatBalance(price)}! (${
+                RESALE_PERCENTAGE * 100
+            }% of the original price)\n\nYour new balance is ${formatBalance(
+                newBalance,
+            )}`,
             {
                 replyTo: event.eventId,
             },
         );
     },
-} satisfies CommandManifest;
+});

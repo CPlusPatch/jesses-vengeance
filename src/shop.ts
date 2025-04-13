@@ -2,7 +2,7 @@ import type { Bot } from "./index.ts";
 
 const SHOP_KEY = "shop";
 
-interface ShopItem {
+export interface ShopItem {
     id: string;
     name: string;
     price: number;

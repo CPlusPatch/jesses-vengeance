@@ -21,9 +21,9 @@ import {
     setCooldown,
 } from "./autoresponder.ts";
 import {
-    type ArgValidationError,
     type CommandManifest,
-    validateArgs,
+    type PossibleArgs,
+    parseArgs,
 } from "./commands.ts";
 import { config } from "./config.ts";
 
@@ -31,7 +31,7 @@ const credentialsFile = file("credentials.json");
 
 export class Bot {
     public client!: MatrixClient;
-    public commands: CommandManifest[] = [];
+    public commands: CommandManifest<Record<string, PossibleArgs>>[] = [];
     public redis = createClient({
         url: config.redis?.url ?? env.REDIS_URL,
     });
@@ -252,18 +252,31 @@ export class Bot {
             if (command) {
                 const args = body.split(" ").slice(1);
 
-                if (command.args) {
-                    try {
-                        await validateArgs(this, roomId, args, command.args);
-                    } catch (e) {
-                        const error = e as ArgValidationError;
-                        return await this.sendMessage(roomId, error.message, {
+                let parsedArgs: Awaited<ReturnType<typeof parseArgs>>;
+
+                try {
+                    parsedArgs = await parseArgs(args, command, this, {
+                        roomId,
+                        event,
+                    });
+                } catch (e) {
+                    return await this.sendMessage(
+                        roomId,
+                        `## Error while parsing arguments:\n\n${(e as Error).message}`,
+                        {
                             replyTo: eventId,
-                        });
-                    }
+                        },
+                    );
                 }
 
-                await command.execute(this, roomId, event, args);
+                consola.debug(
+                    `User ${sender} executed command ${commandName} with args ${JSON.stringify(args)}`,
+                );
+
+                await command.execute(this, parsedArgs, {
+                    roomId,
+                    event,
+                });
             }
         } else {
             const keyword = detectKeyword(body);

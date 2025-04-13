@@ -1,18 +1,24 @@
 import { User } from "../classes/user.ts";
 import { defineCommand } from "../commands.ts";
-import { formatBalance } from "../currency.ts";
 
 export default defineCommand({
-    name: "balance",
-    description: "Check your balance",
-    aliases: ["bal"],
+    name: "items",
+    description: "List your owned items",
     execute: async (client, _args, { roomId, event }): Promise<void> => {
         const sender = new User(event.sender, client);
-        const senderBalance = await sender.getBalance();
+
+        const owned = await sender.getOwnedItems();
+
+        if (owned.length === 0) {
+            await client.sendMessage(roomId, "You don't have any items!", {
+                replyTo: event.eventId,
+            });
+            return;
+        }
 
         await client.sendMessage(
             roomId,
-            `Your balance is ${formatBalance(senderBalance)}`,
+            `## Your items\n\n${owned.map((item) => `- ${item.name}`).join("\n")}`,
             {
                 replyTo: event.eventId,
             },

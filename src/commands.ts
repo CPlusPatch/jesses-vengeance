@@ -1,110 +1,87 @@
 import type { MessageEvent, TextualMessageEventContent } from "matrix-bot-sdk";
-import { isValidAmount, isValidNonNegativeAmount } from "./currency.ts";
+import type {
+    CurrencyArgument,
+    ShopItemArgument,
+    StringArgument,
+    UserArgument,
+} from "./classes/arguments.ts";
 import type { Bot } from "./index.ts";
 
-export interface Arg {
-    name: string;
-    description?: string;
-    required?: boolean;
-    type: "string" | "user" | "currency" | "currency-nonnegative" | "number";
-}
+export type PossibleArgs =
+    | StringArgument<boolean>
+    | UserArgument<boolean>
+    | CurrencyArgument<boolean>
+    | ShopItemArgument<boolean>;
+export type RequiredArgs =
+    | StringArgument<true>
+    | UserArgument<true>
+    | CurrencyArgument<true>
+    | ShopItemArgument<true>;
 
-export interface CommandManifest {
+export interface CommandManifest<
+    ArgsRecord extends Record<string, PossibleArgs>,
+> {
     name: string;
     description?: string;
     aliases?: string[];
-    args?: Arg[];
+    args?: ArgsRecord;
     execute: (
         client: Bot,
-        roomId: string,
-        event: MessageEvent<TextualMessageEventContent>,
-        args: string[],
+        args: {
+            [K in keyof ArgsRecord]: ArgsRecord[K] extends RequiredArgs
+                ? ReturnType<ArgsRecord[K]["parse"]>
+                : ReturnType<ArgsRecord[K]["parse"]> | undefined;
+        },
+        context: {
+            roomId: string;
+            event: MessageEvent<TextualMessageEventContent>;
+        },
     ) => void | Promise<void>;
 }
 
-export const getArg = (body: string, index: number): string | undefined => {
-    const args = body.split(" ");
-    return args[index];
-};
+export const defineCommand = <ArgsRecord extends Record<string, PossibleArgs>>(
+    manifest: CommandManifest<ArgsRecord>,
+): CommandManifest<ArgsRecord> => manifest;
 
-export class ArgValidationError extends Error {
-    public name = "ArgValidationError";
-}
-
-export const validateUserArg = async (
-    arg: string,
-    client: Bot,
-    roomId: string,
-): Promise<boolean> => {
-    if (!arg.startsWith("@")) {
-        return false;
-    }
-
-    if (arg === (await client.client.getUserId())) {
-        return false;
-    }
-
-    if (!(await client.isUserInRoom(roomId, arg))) {
-        return false;
-    }
-
-    return true;
-};
-
-export const validateCurrencyArg = (arg: string): boolean =>
-    isValidAmount(Number(arg.replaceAll("$", "").trim()));
-
-export const validateNonNegativeCurrencyArg = (arg: string): boolean =>
-    isValidNonNegativeAmount(Number(arg.replaceAll("$", "").trim()));
-
-export const validateNumberArg = (arg: string): boolean =>
-    !Number.isNaN(Number(arg.trim()));
-
-export const validateStringArg = (arg: string): boolean => arg.trim() !== "";
-
-export const validateArgs = async (
-    client: Bot,
-    roomId: string,
+export const parseArgs = async <
+    ArgsRecord extends Record<string, PossibleArgs>,
+>(
     args: string[],
-    schemaArgs: Arg[],
-): Promise<boolean> => {
-    for (const [index, schemaArg] of schemaArgs.entries()) {
-        const arg = args[index];
+    manifest: CommandManifest<ArgsRecord>,
+    client: Bot,
+    context: {
+        roomId: string;
+        event: MessageEvent<TextualMessageEventContent>;
+    },
+): Promise<{
+    [K in keyof ArgsRecord]: ReturnType<ArgsRecord[K]["parse"]>;
+}> => {
+    const parsedArgs = {} as {
+        [K in keyof ArgsRecord]: ReturnType<ArgsRecord[K]["parse"]>;
+    };
 
-        if (schemaArg.required && !arg) {
-            throw new ArgValidationError(
-                `Missing required argument: ${schemaArg.name}`,
-            );
-        }
+    for (const [index, name, arg] of Object.entries(manifest.args ?? {}).map(
+        (a, index) => [index, ...a] as const,
+    )) {
+        const argText = args[index];
 
-        if (!arg) {
+        if (!argText) {
+            if (arg.required) {
+                throw new Error(`Missing required argument ${name}`);
+            }
+
             continue;
         }
 
-        let result: boolean;
-
-        switch (schemaArg.type) {
-            case "user":
-                result = await validateUserArg(arg, client, roomId);
-                break;
-            case "currency":
-                result = validateCurrencyArg(arg);
-                break;
-            case "number":
-                result = validateNumberArg(arg);
-                break;
-            case "string":
-                result = validateStringArg(arg);
-                break;
-            case "currency-nonnegative":
-                result = validateNonNegativeCurrencyArg(arg);
-                break;
+        // Validate the argument (will throw if invalid, this will need to be handled by the caller of this function)
+        if (!(await arg.validate(argText, client, context))) {
+            throw new Error(`Invalid argument ${name}: ${argText}`);
         }
 
-        if (!result) {
-            throw new ArgValidationError(`Invalid argument: ${schemaArg.name}`);
-        }
+        // Parse the argument
+        // @ts-expect-error - This is safe because we know the argument is valid
+        parsedArgs[name] = await arg.parse(argText, client);
     }
 
-    return true;
+    return parsedArgs;
 };
