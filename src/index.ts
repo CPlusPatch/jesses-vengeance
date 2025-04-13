@@ -77,8 +77,14 @@ export class Bot {
             }
         };
 
+        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+        const handleReaction = (roomId: string, e: any): Promise<void> => {
+            return this.handleReaction(roomId, e);
+        };
+
         // We don't directly use the event handler, because otherwise we get a confusing "this" context
         this.client.on("room.message", handleMessage);
+        this.client.on("room.event", handleReaction);
 
         if (config.monitoring.health_check_uri) {
             const healthCheck = async (): Promise<void> => {
@@ -211,6 +217,37 @@ export class Bot {
         for (const command of commands) {
             const module = await import(`./commands/${command}`);
             this.commands.push(module.default);
+        }
+    }
+
+    private async handleReaction(
+        roomId: string,
+        event: {
+            content?: { "m.relates_to": { key: string; event_id: string } };
+            type: string;
+            sender: string;
+        },
+    ): Promise<void> {
+        const { content, type, sender } = event;
+
+        if (type !== "m.reaction") {
+            return;
+        }
+
+        const reaction = content?.["m.relates_to"]?.key;
+        const eventId = content?.["m.relates_to"]?.event_id;
+
+        // Delete the reacted message if the reaction is a trash emoji
+        if (reaction && eventId && ["🗑️", "🚮", "🚫", "❌️"].includes(reaction)) {
+            // Check if the message is from the bot
+            const message = await this.client.getEvent(roomId, eventId);
+            if (message.sender === (await this.client.getUserId())) {
+                await this.client.redactEvent(
+                    roomId,
+                    eventId,
+                    `Redaction requested by ${sender}`,
+                );
+            }
         }
     }
 

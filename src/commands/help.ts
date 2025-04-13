@@ -16,7 +16,7 @@ export default defineCommand({
             .join("\n");
         await client.sendMessage(
             roomId,
-            `Here are all the commands:\n${commands}`,
+            `Here are all the commands:\n${commands}\n\n**NOTE**: You can also react to messages with 🗑️, 🚮, 🚫 or ❌️ to have them deleted.`,
             {
                 replyTo: event.eventId,
             },

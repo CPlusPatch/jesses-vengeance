@@ -35,15 +35,11 @@ export class User {
             this.mxid,
         );
 
-        console.log(banned);
-
         if (!banned) {
             return null;
         }
 
         const details = JSON.parse(banned) as BanDetails;
-
-        console.log(details);
 
         if (
             details.duration > 0 &&
