@@ -332,7 +332,7 @@ export class Bot {
                 }
 
                 consola.debug(
-                    `User ${sender} executed command ${commandName} with args ${JSON.stringify(args)}`,
+                    `User ${sender.mxid} executed command ${commandName} with args ${JSON.stringify(args)}`,
                 );
 
                 await command.execute(this, parsedArgs, {

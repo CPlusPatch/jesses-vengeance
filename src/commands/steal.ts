@@ -56,9 +56,9 @@ export default defineCommand({
                 roomId,
                 `You successfully stole ${formatBalance(
                     stolenAmount,
-                )} from ${target} ! They're mad!\n\n${target} balance: ${formatBalance(
+                )} from ${target.mxid} ! They're mad!\n\n${target.mxid} balance: ${formatBalance(
                     newTargetBalance,
-                )}\n\n${sender} balance: ${formatBalance(newSenderBalance)}`,
+                )}\n\n${sender.mxid} balance: ${formatBalance(newSenderBalance)}`,
                 {
                     replyTo: event.eventId,
                 },
@@ -76,11 +76,11 @@ export default defineCommand({
 
             await client.sendMessage(
                 roomId,
-                `You failed to steal from ${target} ! As a punishment, you have to give ${formatBalance(
+                `You failed to steal from ${target.mxid} ! As a punishment, you have to give ${formatBalance(
                     punishment,
-                )} to ${target} !\n\n${target} balance: ${formatBalance(
+                )} to ${target.mxid} !\n\n${target.mxid} balance: ${formatBalance(
                     newTargetBalance,
-                )}\n\n${sender} balance: ${formatBalance(newSenderBalance)}${
+                )}\n\n${sender.mxid} balance: ${formatBalance(newSenderBalance)}${
                     hasVan
                         ? `\n\nVan towed! Tow charge: ${formatBalance(towCharge)}.`
                         : ""

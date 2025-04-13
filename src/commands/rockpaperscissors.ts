@@ -41,7 +41,9 @@ export default defineCommand({
         const balance = await sender.getBalance();
 
         if (wager) {
-            consola.debug(`${sender} is betting ${wager} on rockpaperscissors`);
+            consola.debug(
+                `${sender.mxid} is betting ${wager} on rockpaperscissors`,
+            );
         }
 
         if (wager && wager > balance) {
