@@ -2,6 +2,7 @@ import type { MessageEvent, TextualMessageEventContent } from "matrix-bot-sdk";
 import type {
     CurrencyArgument,
     ShopItemArgument,
+    StockArgument,
     StringArgument,
     UserArgument,
 } from "./classes/arguments.ts";
@@ -12,12 +13,15 @@ export type PossibleArgs =
     | StringArgument<boolean>
     | UserArgument<boolean>
     | CurrencyArgument<boolean>
-    | ShopItemArgument<boolean>;
+    | ShopItemArgument<boolean>
+    | StockArgument<boolean>;
+
 export type RequiredArgs =
     | StringArgument<true>
     | UserArgument<true>
     | CurrencyArgument<true>
-    | ShopItemArgument<true>;
+    | ShopItemArgument<true>
+    | StockArgument<true>;
 
 export interface CommandManifest<
     ArgsRecord extends Record<string, PossibleArgs>,

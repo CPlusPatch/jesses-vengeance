@@ -174,7 +174,7 @@ export class Bot {
     public async sendMedia(
         roomId: string,
         mxcUrl: string,
-        options: {
+        options?: {
             replyTo?: string;
             edit?: string;
             sticker?: boolean;
@@ -182,9 +182,9 @@ export class Bot {
     ): Promise<void> {
         await this.client.sendEvent(
             roomId,
-            options.sticker ? "m.sticker" : "m.room.message",
+            options?.sticker ? "m.sticker" : "m.room.message",
             {
-                msgtype: options.sticker ? undefined : "m.image",
+                msgtype: options?.sticker ? undefined : "m.image",
                 body: "Image",
                 url: mxcUrl,
                 ...(options?.replyTo
