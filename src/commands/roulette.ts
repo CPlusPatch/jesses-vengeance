@@ -25,7 +25,7 @@ export default defineCommand({
             return;
         }
 
-        const result = randint(6, 6);
+        const result = randint(1, 6);
 
         const id = await client.sendMessage(roomId, "Spinning the wheel...", {
             replyTo: event.eventId,
