@@ -297,6 +297,15 @@ export class Bot {
                         banDetails.reason
                             ? `\n\nReason: \`${banDetails.reason}\``
                             : ""
+                    }\n\nBan expires ${
+                        banDetails.duration > 0
+                            ? `in **${Math.floor(
+                                  (banDetails.timestamp +
+                                      banDetails.duration -
+                                      Date.now()) /
+                                      1000,
+                              )} seconds**`
+                            : "**NEVER!**"
                     }`,
                     {
                         replyTo: eventId,
