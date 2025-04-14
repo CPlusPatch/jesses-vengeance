@@ -12,22 +12,30 @@ export default defineCommand({
         }),
     },
     execute: async (client, { stock }, { roomId, event }): Promise<void> => {
-        const stockSvg = stockToSVG(stock[1]);
+        const stockSvg = stockToSVG(stock, 24 * 60 * 60);
+        const buffer = Buffer.from(stockSvg);
 
         await client.sendMessage(
             roomId,
-            `Visualization of stock \`${stock[0]}\`:`,
+            `Visualization of stock \`${stock.name}\`:`,
             {
                 replyTo: event.eventId,
             },
         );
 
         const mxc = await client.client.uploadContent(
-            Buffer.from(stockSvg),
+            buffer,
             "image/svg+xml",
-            `${stock[0]}-chart.svg`,
+            `${stock.name}-chart.svg`,
         );
 
-        await client.sendMedia(roomId, mxc);
+        await client.sendMedia(roomId, mxc, {
+            metadata: {
+                width: 900,
+                height: 500,
+                contentType: "image/svg+xml",
+                size: buffer.byteLength,
+            },
+        });
     },
 });

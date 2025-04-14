@@ -1,5 +1,10 @@
 import * as d3 from "d3";
-import { JSDOM } from "jsdom";
+/* import { JSDOM } from "jsdom"; */
+
+export interface Stock {
+    name: string;
+    parameters: StockParameters;
+}
 
 export interface StockParameters {
     initialPrice: number;
@@ -11,7 +16,7 @@ export interface StockParameters {
 
 const DEFAULT_STOCK_PARAMETERS: StockParameters = {
     initialPrice: 100,
-    volatility: 0.2,
+    volatility: 0.1,
     trendStrength: 0.05,
     jumpProbability: 0.001,
     jumpMagnitude: 0.1,
@@ -20,6 +25,8 @@ const DEFAULT_STOCK_PARAMETERS: StockParameters = {
 export const stocks: Record<string, StockParameters> = {
     JESS: DEFAULT_STOCK_PARAMETERS,
 };
+
+const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
 /**
  * Simulates realistic stock price evolution over time
@@ -120,10 +127,11 @@ interface DataPoint {
     date: Date;
 }
 
-const generateDataPoints = (
+export const generateDataPoints = (
     parameters: StockParameters,
     periodSeconds: number,
     samples: number,
+    start: Date,
 ): DataPoint[] => {
     const data: DataPoint[] = [];
     const sampleInterval = periodSeconds / samples;
@@ -133,7 +141,7 @@ const generateDataPoints = (
         const price = simulateStockPrice(time, parameters);
         const day = i;
         const month = Math.floor(day / 30.4); // Approximate month
-        const date = new Date(2023, 0, i + 1); // Starting from Jan 1, 2023 (arbitrary)
+        const date = new Date(start.getTime() + time * 1000);
 
         data.push({ time, price, day, month, date });
     }
@@ -141,9 +149,18 @@ const generateDataPoints = (
     return data;
 };
 
-export const stockToSVG = (parameters: StockParameters): string => {
+export const stockToSVG = (
+    stock: Stock,
+    periodSeconds = 60 * 60 * 24 * 365,
+    start = new Date(2025, 0, 0),
+): string => {
     // Generate the data
-    const data = generateDataPoints(parameters, 60 * 60 * 24 * 365, 365);
+    const data = generateDataPoints(
+        stock.parameters,
+        periodSeconds,
+        365,
+        start,
+    );
 
     // Calculate statistics
     const prices = data.map((point) => point.price);
@@ -236,7 +253,7 @@ export const stockToSVG = (parameters: StockParameters): string => {
     const quarters = [90, 180, 270].map((day) => {
         return {
             day,
-            date: new Date(2023, 0, day + 1),
+            date: new Date(start.getTime() + day * DAY_IN_MS),
             label: `Q${Math.floor(day / 90) + 1}`,
         };
     });
@@ -260,17 +277,17 @@ export const stockToSVG = (parameters: StockParameters): string => {
     // Add initial price reference line
     g.append("line")
         .attr("x1", 0)
-        .attr("y1", yScale(parameters.initialPrice))
+        .attr("y1", yScale(stock.parameters.initialPrice))
         .attr("x2", innerWidth)
-        .attr("y2", yScale(parameters.initialPrice))
+        .attr("y2", yScale(stock.parameters.initialPrice))
         .attr("stroke", "#888")
         .attr("stroke-dasharray", "5,5");
 
     g.append("text")
         .attr("x", innerWidth + 5)
-        .attr("y", yScale(parameters.initialPrice) + 4)
+        .attr("y", yScale(stock.parameters.initialPrice) + 4)
         .attr("fill", "#666")
-        .text(`Initial ($${parameters.initialPrice.toFixed(2)})`);
+        .text(`Initial ($${stock.parameters.initialPrice.toFixed(2)})`);
 
     // Add X axis
     g.append("g")
@@ -284,15 +301,6 @@ export const stockToSVG = (parameters: StockParameters): string => {
             d3.axisLeft(yScale).tickFormat((d) => `$${d.valueOf().toFixed(0)}`),
         )
         .call((g) => g.selectAll("text").attr("font-size", "12px"));
-
-    // Add X axis label
-    g.append("text")
-        .attr("x", innerWidth / 2)
-        .attr("y", innerHeight + 40)
-        .attr("text-anchor", "middle")
-        .attr("font-size", "14px")
-        .attr("font-weight", "bold")
-        .text("Month");
 
     // Add Y axis label
     g.append("text")
@@ -311,7 +319,7 @@ export const stockToSVG = (parameters: StockParameters): string => {
         .attr("text-anchor", "middle")
         .attr("font-size", "18px")
         .attr("font-weight", "bold")
-        .text("Stock Price Evolution Over One Year");
+        .text(`Evolution of $${stock.name}`);
 
     // Add statistics
     const statsFontSize = "12px";

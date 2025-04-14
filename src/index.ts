@@ -178,6 +178,12 @@ export class Bot {
             replyTo?: string;
             edit?: string;
             sticker?: boolean;
+            metadata?: {
+                width: number;
+                height: number;
+                contentType: string;
+                size: number;
+            };
         },
     ): Promise<void> {
         await this.client.sendEvent(
@@ -186,6 +192,14 @@ export class Bot {
             {
                 msgtype: options?.sticker ? undefined : "m.image",
                 body: "Image",
+                info: options?.metadata
+                    ? {
+                          w: options.metadata.width,
+                          h: options.metadata.height,
+                          mimetype: options.metadata.contentType,
+                          size: options.metadata.size,
+                      }
+                    : {},
                 url: mxcUrl,
                 ...(options?.replyTo
                     ? {

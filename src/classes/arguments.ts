@@ -2,7 +2,7 @@ import type { MessageEvent, TextualMessageEventContent } from "matrix-bot-sdk";
 import type { Bot } from "../index.ts";
 import type { ShopItem } from "../shop.ts";
 import { shopItems } from "../shop.ts";
-import { type StockParameters, stocks } from "../util/finance.ts";
+import { type Stock, type StockParameters, stocks } from "../util/finance.ts";
 import { roundCurrency } from "../util/math.ts";
 import { User } from "./user.ts";
 
@@ -192,7 +192,7 @@ export class ShopItemArgument<IsRequired extends boolean> extends Argument<
 }
 
 export class StockArgument<IsRequired extends boolean> extends Argument<
-    [keyof typeof stocks, StockParameters],
+    Stock,
     IsRequired
 > {
     public constructor(
@@ -200,7 +200,7 @@ export class StockArgument<IsRequired extends boolean> extends Argument<
         public required: IsRequired,
         public options?: Partial<{
             description: string;
-            default: [keyof typeof stocks, StockParameters];
+            default: Stock;
         }>,
     ) {
         super(name, required, options);
@@ -212,10 +212,12 @@ export class StockArgument<IsRequired extends boolean> extends Argument<
         );
     }
 
-    public parse(arg: string): [keyof typeof stocks, StockParameters] {
-        return [
-            arg as keyof typeof stocks,
-            stocks[arg as keyof typeof stocks] as StockParameters,
-        ];
+    public parse(arg: string): Stock {
+        const stock = stocks[arg as keyof typeof stocks] as StockParameters;
+
+        return {
+            name: arg,
+            parameters: stock,
+        };
     }
 }
