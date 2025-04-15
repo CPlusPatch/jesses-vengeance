@@ -16,7 +16,7 @@
       pkgs = import nixpkgs {
         inherit system;
       };
-      pnpm = pkgs.pnpm_9;
+      pnpm = pkgs.pnpm;
 
       crypto = pkgs.fetchurl {
         url = "https://github.com/matrix-org/matrix-rust-sdk/releases/download/matrix-sdk-crypto-nodejs-v0.1.0-beta.6/matrix-sdk-crypto.linux-x64-gnu.node";
