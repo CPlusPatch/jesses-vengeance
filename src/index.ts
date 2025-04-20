@@ -28,7 +28,7 @@ import {
 } from "./commands.ts";
 import { config } from "./config.ts";
 
-const credentialsFile = file("credentials.json");
+const credentialsFile = file("./credentials.json");
 
 export class Bot {
     public client!: MatrixClient;
