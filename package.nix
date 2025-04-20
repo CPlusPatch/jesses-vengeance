@@ -53,7 +53,7 @@ in
       cp -r * $out/${finalAttrs.pname}
 
       makeWrapper ${lib.getExe bun} $out/bin/${finalAttrs.pname} \
-        --add-flags "run $out/${finalAttrs.pname}/${packageJson.module}" \
+        --add-flags "--cwd=$out/${finalAttrs.pname} run $out/${finalAttrs.pname}/${packageJson.module}" \
         --set NODE_PATH $out/${finalAttrs.pname}/node_modules \
         --prefix PATH : ${binPath} \
         --prefix LD_LIBRARY_PATH : ${libPath}

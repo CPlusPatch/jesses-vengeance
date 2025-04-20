@@ -64,7 +64,7 @@ in {
         StandardError = "journal";
         SyslogIdentifier = "bitchbot";
 
-        Environment = "CONFIG_FILE=${configFile}";
+        Environment = ["CONFIG_FILE=${configFile}" "CREDENTIALS_FILE=${cfg.dataDir}/credentials.json"];
       };
     };
 
