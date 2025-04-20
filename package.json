@@ -1,5 +1,7 @@
 {
     "name": "bitchbot",
+    "version": "0.0.1",
+    "description": "A bot for the Matrix protocol, written in Bun.",
     "module": "index.ts",
     "type": "module",
     "private": true,
