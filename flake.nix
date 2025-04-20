@@ -16,6 +16,11 @@
       overlays.default = final: prev: {
         bitchbot = final.callPackage ./package.nix {};
       };
+
+      nixosModules = rec {
+        bitchbot = import ./module.nix;
+        default = bitchbot;
+      };
     }
     // flake-utils.lib.eachDefaultSystem (system: let
       pkgs = import nixpkgs {
@@ -26,11 +31,6 @@
       packages = {
         inherit (pkgs) bitchbot;
         default = self.packages.${system}.bitchbot;
-      };
-
-      nixosModules = rec {
-        bitchbot = import ./module.nix;
-        default = bitchbot;
       };
     });
 }
