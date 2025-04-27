@@ -32,8 +32,8 @@ export interface CommandManifest<
     execute: (
         args: {
             [K in keyof ArgsRecord]: ArgsRecord[K] extends RequiredArgs
-                ? ReturnType<ArgsRecord[K]["parse"]>
-                : ReturnType<ArgsRecord[K]["parse"]> | undefined;
+                ? Awaited<ReturnType<ArgsRecord[K]["parse"]>>
+                : Awaited<ReturnType<ArgsRecord[K]["parse"]>> | undefined;
         },
         event: TextEvent,
     ) => void | Promise<void>;
@@ -50,10 +50,10 @@ export const parseArgs = async <
     manifest: CommandManifest<ArgsRecord>,
     event: TextEvent,
 ): Promise<{
-    [K in keyof ArgsRecord]: ReturnType<ArgsRecord[K]["parse"]>;
+    [K in keyof ArgsRecord]: Awaited<ReturnType<ArgsRecord[K]["parse"]>>;
 }> => {
     const parsedArgs = {} as {
-        [K in keyof ArgsRecord]: ReturnType<ArgsRecord[K]["parse"]>;
+        [K in keyof ArgsRecord]: Awaited<ReturnType<ArgsRecord[K]["parse"]>>;
     };
 
     for (const [index, name, arg] of Object.entries(manifest.args ?? {}).map(
@@ -76,7 +76,7 @@ export const parseArgs = async <
 
         // Parse the argument
         // @ts-expect-error - This is safe because we know the argument is valid
-        parsedArgs[name] = arg.parse(argText);
+        parsedArgs[name] = await arg.parse(argText, event);
     }
 
     return parsedArgs;

@@ -33,7 +33,7 @@ export abstract class Argument<Value, IsRequired extends boolean> {
         event: Event,
     ): Promise<boolean> | boolean;
 
-    public abstract parse(arg: string): Promise<Value> | Value;
+    public abstract parse(arg: string, event: Event): Promise<Value> | Value;
 }
 
 export class StringArgument<IsRequired extends boolean> extends Argument<
@@ -75,14 +75,52 @@ export class UserArgument<IsRequired extends boolean> extends Argument<
         super(name, required, options);
     }
 
+    private static async parseUserId(
+        roomId: string,
+        arg: string,
+    ): Promise<string | null> {
+        // Parsing strategies:
+        // 1. MXID
+        // 2. Display name
+        // 3. Username
+
+        if (arg.match(/^@[^:]*:.+$/)) {
+            return arg;
+        }
+
+        const users = await client.client.getRoomMembers(roomId);
+
+        const matching = users.find((u) => {
+            const displayName = u.content.displayname?.toLowerCase() ?? "";
+            return displayName === arg.toLowerCase();
+        });
+
+        if (matching) {
+            return matching.sender;
+        }
+
+        const matchingUser = users.find((u) => {
+            const userId = u.sender.split(":")[0]?.replace(/@/, "") ?? "";
+            return userId.toLowerCase() === arg.toLowerCase();
+        });
+
+        if (matchingUser) {
+            return matchingUser.sender;
+        }
+
+        return null;
+    }
+
     public async validate(arg: string, event: Event): Promise<boolean> {
-        if (!arg.match(/^@[^:]*:.+$/)) {
+        const userId = await UserArgument.parseUserId(event.roomId, arg);
+
+        if (!userId) {
             throw new ArgumentValidationError(
-                `\`${arg}\` is not a valid MXID.`,
+                `\`${arg}\` is not a valid user.`,
             );
         }
 
-        if (arg === (await client.client.getUserId())) {
+        if (userId === (await client.client.getUserId())) {
             throw new ArgumentValidationError(
                 "Cannot use the MXID of this bot.",
             );
@@ -91,17 +129,21 @@ export class UserArgument<IsRequired extends boolean> extends Argument<
         if (
             !(
                 this.options?.canBeOutsideRoom ||
-                (await event.sender.isInRoom(event.roomId))
+                (await client.isUserInRoom(event.roomId, userId))
             )
         ) {
-            throw new ArgumentValidationError(`\`${arg}\` is not in the room.`);
+            throw new ArgumentValidationError(
+                `\`${userId}\` is not in the room.`,
+            );
         }
 
         return true;
     }
 
-    public parse(arg: string): User {
-        return new User(arg);
+    public async parse(arg: string, event: Event): Promise<User> {
+        const userId = await UserArgument.parseUserId(event.roomId, arg);
+
+        return new User(userId as string);
     }
 }
 
