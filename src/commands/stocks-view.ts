@@ -1,3 +1,4 @@
+import { client } from "../../index.ts";
 import { StockArgument } from "../classes/arguments.ts";
 import { defineCommand } from "../commands.ts";
 import { stockToSVG } from "../util/finance.ts";
@@ -12,7 +13,7 @@ export default defineCommand({
         }),
     },
     disabled: true,
-    execute: async (client, { stock }, { roomId, event }): Promise<void> => {
+    execute: async ({ stock }, { roomId, id }): Promise<void> => {
         const stockSvg = stockToSVG(stock, 24 * 60 * 60);
         const buffer = Buffer.from(stockSvg);
 
@@ -20,7 +21,7 @@ export default defineCommand({
             roomId,
             `Visualization of stock \`${stock.name}\`:`,
             {
-                replyTo: event.eventId,
+                replyTo: id,
             },
         );
 

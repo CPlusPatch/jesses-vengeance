@@ -9,10 +9,8 @@ import {
     AutojoinRoomsMixin,
     MatrixAuth,
     MatrixClient,
-    MessageEvent,
     RustSdkCryptoStorageProvider,
     SimpleFsStorageProvider,
-    type TextualMessageEventContent,
 } from "matrix-bot-sdk";
 import {
     detectKeyword,
@@ -20,7 +18,7 @@ import {
     pickRandomResponse,
     setCooldown,
 } from "./autoresponder.ts";
-import { User } from "./classes/user.ts";
+import { Event, ReactionEvent, TextEvent } from "./classes/event.ts";
 import {
     type CommandManifest,
     type PossibleArgs,
@@ -59,12 +57,12 @@ export class Bot {
         AutojoinRoomsMixin.setupOnClient(this.client);
         consola.info("AutojoinRoomsMixin setup!");
 
-        const handleMessage = async (
+        const handleEvent = async (
             roomId: string,
             e: unknown,
         ): Promise<void> => {
             try {
-                return this.handleMessage(roomId, new MessageEvent(e));
+                await this.handleEvent(roomId, e);
             } catch (e) {
                 await this.sendMessage(
                     roomId,
@@ -77,14 +75,8 @@ export class Bot {
             }
         };
 
-        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-        const handleReaction = (roomId: string, e: any): Promise<void> => {
-            return this.handleReaction(roomId, e);
-        };
-
         // We don't directly use the event handler, because otherwise we get a confusing "this" context
-        this.client.on("room.message", handleMessage);
-        this.client.on("room.event", handleReaction);
+        this.client.on("room.event", handleEvent);
 
         if (config.monitoring.health_check_uri) {
             const healthCheck = async (): Promise<void> => {
@@ -237,56 +229,63 @@ export class Bot {
         }
     }
 
-    private async handleReaction(
-        roomId: string,
-        event: {
-            content?: { "m.relates_to": { key: string; event_id: string } };
-            type: string;
-            sender: string;
-        },
-    ): Promise<void> {
-        const { content, type, sender } = event;
-
-        if (type !== "m.reaction") {
-            return;
-        }
-
-        const reaction = content?.["m.relates_to"]?.key;
-        const eventId = content?.["m.relates_to"]?.event_id;
+    private async handleReaction(event: ReactionEvent): Promise<void> {
+        const { reaction, roomId, id, sender } = event;
+        const target = await event.getTarget();
 
         // Delete the reacted message if the reaction is a trash emoji
-        if (reaction && eventId && ["🗑️", "🚮", "🚫", "❌️"].includes(reaction)) {
+        if (
+            reaction &&
+            target &&
+            ["🗑️", "🚮", "🚫", "❌️"].includes(reaction) &&
+            (await target.sender.isBot())
+        ) {
             // Check if the message is from the bot
-            const message = await this.client.getEvent(roomId, eventId);
-            if (message.sender === (await this.client.getUserId())) {
-                await this.client.redactEvent(
-                    roomId,
-                    eventId,
-                    `Redaction requested by ${sender}`,
-                );
-            }
+            await this.client.redactEvent(
+                roomId,
+                id,
+                `Redaction requested by ${sender.mxid}`,
+            );
         }
     }
 
-    private async handleMessage(
-        roomId: string,
-        event: MessageEvent<TextualMessageEventContent>,
-    ): Promise<void> {
-        const {
-            content: { body, msgtype },
-            eventId,
-        } = event;
-        const sender = new User(event.sender, this);
+    private async handleEvent(roomId: string, eventData: any): Promise<void> {
+        const type = Event.parseMatrixType(eventData.type);
 
-        if ((await this.client.getUserId()) === sender.mxid) {
+        switch (type) {
+            case "text":
+                await this.handleMessage(
+                    new TextEvent({
+                        ...eventData,
+                        room_id: roomId,
+                    }),
+                );
+                break;
+            case "reaction":
+                await this.handleReaction(
+                    new ReactionEvent({
+                        ...eventData,
+                        room_id: roomId,
+                    }),
+                );
+                break;
+            default:
+                break;
+        }
+    }
+
+    private async handleMessage(event: TextEvent): Promise<void> {
+        const { body, sender, roomId, id } = event;
+
+        if (await sender.isBot()) {
             return;
         }
 
-        if (msgtype === "m.notice" || !body) {
+        if (!event.isText()) {
             return;
         }
 
-        if (body?.trim().startsWith(config.commands.prefix)) {
+        if (body.startsWith(config.commands.prefix)) {
             const commandName = body
                 .split(" ")[0]
                 ?.slice(config.commands.prefix.length)
@@ -300,7 +299,7 @@ export class Bot {
                 config.users.banned.some((b) => new Glob(b).match(sender.mxid))
             ) {
                 await this.sendMessage(roomId, "🖕", {
-                    replyTo: eventId,
+                    replyTo: id,
                 });
                 return;
             }
@@ -325,7 +324,7 @@ export class Bot {
                             : "**NEVER!**"
                     }`,
                     {
-                        replyTo: eventId,
+                        replyTo: id,
                     },
                 );
                 return;
@@ -342,16 +341,13 @@ export class Bot {
                 let parsedArgs: Awaited<ReturnType<typeof parseArgs>>;
 
                 try {
-                    parsedArgs = await parseArgs(args, command, this, {
-                        roomId,
-                        event,
-                    });
+                    parsedArgs = await parseArgs(args, command, event);
                 } catch (e) {
                     await this.sendMessage(
                         roomId,
                         `**Error while parsing arguments:**\n\n${(e as Error).message}`,
                         {
-                            replyTo: eventId,
+                            replyTo: id,
                         },
                     );
                     return;
@@ -361,11 +357,7 @@ export class Bot {
                     `User ${sender.mxid} executed command ${commandName} with args ${JSON.stringify(args)}`,
                 );
 
-                await command.execute(this, parsedArgs, {
-                    roomId,
-                    event,
-                    sender,
-                });
+                await command.execute(parsedArgs, event);
             }
         } else {
             const keyword = detectKeyword(body);
@@ -376,7 +368,7 @@ export class Bot {
                 }
 
                 await this.sendMessage(roomId, pickRandomResponse(keyword), {
-                    replyTo: eventId,
+                    replyTo: id,
                 });
 
                 await setCooldown(this, roomId, 60);

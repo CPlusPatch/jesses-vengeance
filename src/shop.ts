@@ -1,4 +1,4 @@
-import type { Bot } from "./index.ts";
+import { client } from "../index.ts";
 
 const SHOP_KEY = "shop";
 
@@ -38,10 +38,7 @@ export const shopItems: ShopItem[] = [
     },
 ];
 
-export const getOwnedItems = async (
-    client: Bot,
-    userId: string,
-): Promise<ShopItem[]> => {
+export const getOwnedItems = async (userId: string): Promise<ShopItem[]> => {
     const itemIdsJson = await client.redis.hGet(SHOP_KEY, userId);
 
     if (!itemIdsJson) {
@@ -55,7 +52,6 @@ export const getOwnedItems = async (
 };
 
 export const setOwnedItems = async (
-    client: Bot,
     userId: string,
     items: ShopItem[],
 ): Promise<void> => {
@@ -64,32 +60,29 @@ export const setOwnedItems = async (
 };
 
 export const addOwnedItem = async (
-    client: Bot,
     userId: string,
     item: ShopItem,
 ): Promise<void> => {
-    const currentItems = await getOwnedItems(client, userId);
+    const currentItems = await getOwnedItems(userId);
     if (!currentItems.some((i) => i.id === item.id)) {
         currentItems.push(item);
-        await setOwnedItems(client, userId, currentItems);
+        await setOwnedItems(userId, currentItems);
     }
 };
 
 export const removeOwnedItem = async (
-    client: Bot,
     userId: string,
     itemId: string,
 ): Promise<void> => {
-    const currentItems = await getOwnedItems(client, userId);
+    const currentItems = await getOwnedItems(userId);
     const updatedItems = currentItems.filter((item) => item.id !== itemId);
-    await setOwnedItems(client, userId, updatedItems);
+    await setOwnedItems(userId, updatedItems);
 };
 
 export const ownsItem = async (
-    client: Bot,
     userId: string,
     itemId: string,
 ): Promise<boolean> => {
-    const currentItems = await getOwnedItems(client, userId);
+    const currentItems = await getOwnedItems(userId);
     return currentItems.some((item) => item.id === itemId);
 };

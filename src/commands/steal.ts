@@ -1,5 +1,5 @@
+import { client } from "../../index.ts";
 import { UserArgument } from "../classes/arguments.ts";
-import { User } from "../classes/user.ts";
 import { defineCommand } from "../commands.ts";
 import { formatBalance } from "../currency.ts";
 import { type ShopItem, shopItems } from "../shop.ts";
@@ -22,9 +22,7 @@ export default defineCommand({
             description: "The user to steal from",
         }),
     },
-    execute: async (client, { target }, { roomId, event }): Promise<void> => {
-        const sender = new User(event.sender, client);
-
+    execute: async ({ target }, { roomId, sender, id }): Promise<void> => {
         const senderBalance = await sender.getBalance();
 
         if (senderBalance < 10) {
@@ -32,7 +30,7 @@ export default defineCommand({
                 roomId,
                 "You don't have enough balance to steal lol, broke ass, try again later",
                 {
-                    replyTo: event.eventId,
+                    replyTo: id,
                 },
             );
             return;
@@ -60,7 +58,7 @@ export default defineCommand({
                     newTargetBalance,
                 )}\n\n${sender.mxid} balance: ${formatBalance(newSenderBalance)}`,
                 {
-                    replyTo: event.eventId,
+                    replyTo: id,
                 },
             );
         } else {
@@ -86,7 +84,7 @@ export default defineCommand({
                         : ""
                 }`,
                 {
-                    replyTo: event.eventId,
+                    replyTo: id,
                 },
             );
         }

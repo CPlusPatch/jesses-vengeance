@@ -1,4 +1,4 @@
-import type { Bot } from "../index.ts";
+import { client } from "../../index.ts";
 import { getOwnedItems, type ShopItem, setOwnedItems } from "../shop.ts";
 import { clamp, roundCurrency } from "../util/math.ts";
 
@@ -20,20 +20,14 @@ interface BanDetails {
 }
 
 export class User {
-    public constructor(
-        public mxid: string,
-        private client: Bot,
-    ) {}
+    public constructor(public mxid: string) {}
 
     public getProfile(): Promise<UserProfile> {
-        return this.client.client.getUserProfile(this.mxid);
+        return client.client.getUserProfile(this.mxid).catch(() => ({}));
     }
 
     public async isBanned(): Promise<BanDetails | null> {
-        const banned = await this.client.redis.hGet(
-            BANNED_USERS_KEY,
-            this.mxid,
-        );
+        const banned = await client.redis.hGet(BANNED_USERS_KEY, this.mxid);
 
         if (!banned) {
             return null;
@@ -45,15 +39,23 @@ export class User {
             details.duration > 0 &&
             details.timestamp + details.duration < Date.now()
         ) {
-            await this.client.redis.hDel(BANNED_USERS_KEY, this.mxid);
+            await client.redis.hDel(BANNED_USERS_KEY, this.mxid);
             return null;
         }
 
         return details;
     }
 
+    public async isBot(): Promise<boolean> {
+        return (await client.client.getUserId()) === this.mxid;
+    }
+
+    public isInRoom(roomId: string): Promise<boolean> {
+        return client.isUserInRoom(roomId, this.mxid);
+    }
+
     public async ban(durationSeconds: number, reason?: string): Promise<void> {
-        await this.client.redis.hSet(
+        await client.redis.hSet(
             BANNED_USERS_KEY,
             this.mxid,
             JSON.stringify({
@@ -65,7 +67,7 @@ export class User {
     }
 
     public async getBalance(): Promise<number> {
-        const score = await this.client.redis.zScore(BALANCES_KEY, this.mxid);
+        const score = await client.redis.zScore(BALANCES_KEY, this.mxid);
 
         if (score === null) {
             return this.setBalance(DEFAULT_BALANCE);
@@ -77,7 +79,7 @@ export class User {
     public async setBalance(balance: number): Promise<number> {
         const finalBalance = clamp(roundCurrency(balance), 0, AMOUNT_CAP);
 
-        await this.client.redis.zAdd(BALANCES_KEY, {
+        await client.redis.zAdd(BALANCES_KEY, {
             score: finalBalance,
             value: this.mxid,
         });
@@ -92,7 +94,7 @@ export class User {
     }
 
     public async getOwnedItems(): Promise<ShopItem[]> {
-        const items = await getOwnedItems(this.client, this.mxid);
+        const items = await getOwnedItems(this.mxid);
 
         return items;
     }
@@ -100,7 +102,7 @@ export class User {
     public async addOwnedItem(item: ShopItem): Promise<ShopItem[]> {
         const items = await this.getOwnedItems();
 
-        await setOwnedItems(this.client, this.mxid, [...items, item]);
+        await setOwnedItems(this.mxid, [...items, item]);
 
         return [...items, item];
     }
@@ -109,7 +111,6 @@ export class User {
         const items = await this.getOwnedItems();
 
         await setOwnedItems(
-            this.client,
             this.mxid,
             items.filter((i) => i.id !== item.id),
         );

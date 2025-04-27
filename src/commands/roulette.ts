@@ -1,5 +1,5 @@
+import { client } from "../../index.ts";
 import { CurrencyArgument } from "../classes/arguments.ts";
-import { User } from "../classes/user.ts";
 import { defineCommand } from "../commands.ts";
 import { formatBalance } from "../currency.ts";
 import { randint } from "../util/math.ts";
@@ -13,8 +13,7 @@ export default defineCommand({
             description: "The amount of money to bet",
         }),
     },
-    execute: async (client, { wager }, { roomId, event }): Promise<void> => {
-        const sender = new User(event.sender, client);
+    execute: async ({ wager }, { roomId, id, sender }): Promise<void> => {
         const senderBalance = await sender.getBalance();
 
         if (senderBalance < wager) {
@@ -27,15 +26,19 @@ export default defineCommand({
 
         const result = randint(1, 6);
 
-        const id = await client.sendMessage(roomId, "Spinning the wheel...", {
-            replyTo: event.eventId,
-        });
+        const spinEventId = await client.sendMessage(
+            roomId,
+            "Spinning the wheel...",
+            {
+                replyTo: id,
+            },
+        );
 
         await Bun.sleep(1000);
 
         await client.sendMessage(roomId, `The wheel landed on ${result}!`, {
-            replyTo: event.eventId,
-            edit: id,
+            replyTo: id,
+            edit: spinEventId,
         });
 
         if (result === 1) {

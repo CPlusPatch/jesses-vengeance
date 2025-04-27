@@ -145,7 +145,8 @@
                 "noVar": "error",
                 "useAwait": "error",
                 "useErrorMessage": "error",
-                "useNumberToFixedDigitsArgument": "error"
+                "useNumberToFixedDigitsArgument": "error",
+                "noExplicitAny": "off"
             }
         }
     },

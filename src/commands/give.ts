@@ -1,6 +1,6 @@
+import { client } from "../../index.ts";
 import { CurrencyArgument } from "../classes/arguments.ts";
 import { UserArgument } from "../classes/arguments.ts";
-import { User } from "../classes/user.ts";
 import { defineCommand } from "../commands.ts";
 import { formatBalance } from "../currency.ts";
 
@@ -17,12 +17,9 @@ export default defineCommand({
         }),
     },
     execute: async (
-        client,
         { target, amount },
-        { roomId, event },
+        { sender, roomId, id },
     ): Promise<void> => {
-        const sender = new User(event.sender, client);
-
         const senderBalance = await sender.getBalance();
 
         if (sender.mxid === target.mxid) {
@@ -30,7 +27,7 @@ export default defineCommand({
                 roomId,
                 "You can't give money to yourself",
                 {
-                    replyTo: event.eventId,
+                    replyTo: id,
                 },
             );
             return;
@@ -41,7 +38,7 @@ export default defineCommand({
                 roomId,
                 `You don't have enough balance to give ${formatBalance(amount)}`,
                 {
-                    replyTo: event.eventId,
+                    replyTo: id,
                 },
             );
             return;
@@ -54,7 +51,7 @@ export default defineCommand({
             roomId,
             `Gave ${formatBalance(amount)} to ${target.mxid}!`,
             {
-                replyTo: event.eventId,
+                replyTo: id,
             },
         );
     },

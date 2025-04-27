@@ -1,5 +1,5 @@
+import { client } from "../../index.ts";
 import { ShopItemArgument } from "../classes/arguments.ts";
-import { User } from "../classes/user.ts";
 import { defineCommand } from "../commands.ts";
 import { formatBalance } from "../currency.ts";
 
@@ -11,13 +11,11 @@ export default defineCommand({
             description: "The item to buy",
         }),
     },
-    execute: async (client, { item }, { roomId, event }): Promise<void> => {
-        const sender = new User(event.sender, client);
-
+    execute: async ({ item }, { sender, roomId, id }): Promise<void> => {
         // Check if the user has already bought the item
         if (await sender.ownsItem(item)) {
             await client.sendMessage(roomId, "You already have this item!", {
-                replyTo: event.eventId,
+                replyTo: id,
             });
             return;
         }
@@ -29,7 +27,7 @@ export default defineCommand({
                 roomId,
                 "You don't have enough balance to buy this item",
                 {
-                    replyTo: event.eventId,
+                    replyTo: id,
                 },
             );
             return;
@@ -44,7 +42,7 @@ export default defineCommand({
                 item.price,
             )}!\n\nYour new balance is ${formatBalance(newBalance)}`,
             {
-                replyTo: event.eventId,
+                replyTo: id,
             },
         );
     },

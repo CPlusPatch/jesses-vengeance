@@ -1,9 +1,9 @@
-import type { MessageEvent, TextualMessageEventContent } from "matrix-bot-sdk";
-import type { Bot } from "../index.ts";
+import { client } from "../../index.ts";
 import type { ShopItem } from "../shop.ts";
 import { shopItems } from "../shop.ts";
 import { type Stock, type StockParameters, stocks } from "../util/finance.ts";
 import { roundCurrency } from "../util/math.ts";
+import type { Event } from "./event.ts";
 import { User } from "./user.ts";
 
 class ArgumentValidationError extends Error {
@@ -30,14 +30,10 @@ export abstract class Argument<Value, IsRequired extends boolean> {
 
     public abstract validate(
         arg: string,
-        client: Bot,
-        context: {
-            roomId: string;
-            event: MessageEvent<TextualMessageEventContent>;
-        },
+        event: Event,
     ): Promise<boolean> | boolean;
 
-    public abstract parse(arg: string, client: Bot): Promise<Value> | Value;
+    public abstract parse(arg: string): Promise<Value> | Value;
 }
 
 export class StringArgument<IsRequired extends boolean> extends Argument<
@@ -79,14 +75,7 @@ export class UserArgument<IsRequired extends boolean> extends Argument<
         super(name, required, options);
     }
 
-    public async validate(
-        arg: string,
-        client: Bot,
-        context: {
-            roomId: string;
-            event: MessageEvent<TextualMessageEventContent>;
-        },
-    ): Promise<boolean> {
+    public async validate(arg: string, event: Event): Promise<boolean> {
         if (!arg.match(/^@[^:]*:.+$/)) {
             throw new ArgumentValidationError(
                 `\`${arg}\` is not a valid MXID.`,
@@ -102,7 +91,7 @@ export class UserArgument<IsRequired extends boolean> extends Argument<
         if (
             !(
                 this.options?.canBeOutsideRoom ||
-                (await client.isUserInRoom(context.roomId, arg))
+                (await event.sender.isInRoom(event.roomId))
             )
         ) {
             throw new ArgumentValidationError(`\`${arg}\` is not in the room.`);
@@ -111,8 +100,8 @@ export class UserArgument<IsRequired extends boolean> extends Argument<
         return true;
     }
 
-    public parse(arg: string, client: Bot): User {
-        return new User(arg, client);
+    public parse(arg: string): User {
+        return new User(arg);
     }
 }
 

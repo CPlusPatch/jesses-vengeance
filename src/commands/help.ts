@@ -1,9 +1,10 @@
+import { client } from "../../index.ts";
 import { defineCommand } from "../commands.ts";
 
 export default defineCommand({
     name: "help",
     description: "List all commands",
-    execute: async (client, _args, { roomId, event }): Promise<void> => {
+    execute: async (_args, { roomId, id }): Promise<void> => {
         const commands = client.commands
             .map(
                 (c) =>
@@ -24,7 +25,7 @@ export default defineCommand({
             roomId,
             `Here are all the commands:\n${commands}\n\n**NOTE**: You can also react to messages with 🗑️, 🚮, 🚫 or ❌️ to have them deleted.`,
             {
-                replyTo: event.eventId,
+                replyTo: id,
             },
         );
     },

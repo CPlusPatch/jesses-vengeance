@@ -26,7 +26,6 @@ const {
 } = defineProps<{
     name: string;
     type: SeriesDefinition<SeriesType>;
-    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     data: any[];
     autosize: boolean;
     chartOptions: DeepPartial<ChartOptions>;

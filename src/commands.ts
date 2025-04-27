@@ -1,4 +1,3 @@
-import type { MessageEvent, TextualMessageEventContent } from "matrix-bot-sdk";
 import type {
     CurrencyArgument,
     ShopItemArgument,
@@ -6,8 +5,7 @@ import type {
     StringArgument,
     UserArgument,
 } from "./classes/arguments.ts";
-import type { User } from "./classes/user.ts";
-import type { Bot } from "./index.ts";
+import type { TextEvent } from "./classes/event.ts";
 
 export type PossibleArgs =
     | StringArgument<boolean>
@@ -32,17 +30,12 @@ export interface CommandManifest<
     args?: ArgsRecord;
     disabled?: boolean;
     execute: (
-        client: Bot,
         args: {
             [K in keyof ArgsRecord]: ArgsRecord[K] extends RequiredArgs
                 ? ReturnType<ArgsRecord[K]["parse"]>
                 : ReturnType<ArgsRecord[K]["parse"]> | undefined;
         },
-        context: {
-            roomId: string;
-            event: MessageEvent<TextualMessageEventContent>;
-            sender: User;
-        },
+        event: TextEvent,
     ) => void | Promise<void>;
 }
 
@@ -55,11 +48,7 @@ export const parseArgs = async <
 >(
     args: string[],
     manifest: CommandManifest<ArgsRecord>,
-    client: Bot,
-    context: {
-        roomId: string;
-        event: MessageEvent<TextualMessageEventContent>;
-    },
+    event: TextEvent,
 ): Promise<{
     [K in keyof ArgsRecord]: ReturnType<ArgsRecord[K]["parse"]>;
 }> => {
@@ -81,13 +70,13 @@ export const parseArgs = async <
         }
 
         // Validate the argument (will throw if invalid, this will need to be handled by the caller of this function)
-        if (!(await arg.validate(argText, client, context))) {
+        if (!(await arg.validate(argText, event))) {
             throw new Error(`Invalid argument ${name}: ${argText}`);
         }
 
         // Parse the argument
         // @ts-expect-error - This is safe because we know the argument is valid
-        parsedArgs[name] = await arg.parse(argText, client);
+        parsedArgs[name] = arg.parse(argText);
     }
 
     return parsedArgs;

@@ -1,15 +1,16 @@
+import { client } from "../../index.ts";
 import { defineCommand } from "../commands.ts";
 
 export default defineCommand({
     name: "sussex",
     description: "Discover what got me banned from r/sussex",
     aliases: ["s"],
-    execute: async (client, _args, { roomId, event }): Promise<void> => {
+    execute: async (_args, { roomId, id }): Promise<void> => {
         await client.sendMedia(
             roomId,
             "mxc://cpluspatch.dev/pyjPIqccXFUuViLOPgGCyflT",
             {
-                replyTo: event.eventId,
+                replyTo: id,
                 sticker: true,
             },
         );

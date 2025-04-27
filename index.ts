@@ -1,5 +1,5 @@
 import { Bot } from "./src/index.ts";
 
-const bot = new Bot();
+export const client = new Bot();
 
-bot.start();
+client.start();

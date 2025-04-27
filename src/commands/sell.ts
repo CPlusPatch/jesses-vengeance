@@ -1,5 +1,5 @@
+import { client } from "../../index.ts";
 import { ShopItemArgument } from "../classes/arguments.ts";
-import { User } from "../classes/user.ts";
 import { defineCommand } from "../commands.ts";
 import { formatBalance } from "../currency.ts";
 
@@ -13,18 +13,14 @@ export default defineCommand({
             description: "The item to sell",
         }),
     },
-    execute: async (client, { item }, { roomId, event }): Promise<void> => {
-        const sender = new User(event.sender, client);
-
+    execute: async ({ item }, { roomId, sender, id }): Promise<void> => {
         // Check if the user has already bought the item
         if (!(await sender.ownsItem(item))) {
             await client.sendMessage(roomId, "You don't have this item!", {
-                replyTo: event.eventId,
+                replyTo: id,
             });
             return;
         }
-
-        const balance = await sender.getBalance();
 
         const price = item.price * RESALE_PERCENTAGE;
 
@@ -39,7 +35,7 @@ export default defineCommand({
                 newBalance,
             )}`,
             {
-                replyTo: event.eventId,
+                replyTo: id,
             },
         );
     },

@@ -1,55 +1,41 @@
-import { MessageEvent, type TextualMessageEventContent } from "matrix-bot-sdk";
+import { client } from "../../index.ts";
 import { defineCommand } from "../commands.ts";
 import { getQuote } from "../quote.ts";
 
 export default defineCommand({
     name: "quote",
     description: "Make a message into a quote",
-    execute: async (
-        client,
-        _args,
-        { roomId, event: { content, eventId } },
-    ): Promise<void> => {
-        // @ts-expect-error The event isn't typed properly
-        const replyEventId = content?.["m.relates_to"]?.["m.in_reply_to"]
-            ?.event_id as string;
+    execute: async (_args, { roomId, getReplyTarget, id }): Promise<void> => {
+        const replyTarget = await getReplyTarget();
 
-        if (!replyEventId) {
-            await client.sendMessage(roomId, "This message is not a reply.");
-            return;
-        }
-
-        const replyEvent = new MessageEvent<TextualMessageEventContent>(
-            await client.client.getEvent(roomId, replyEventId),
-        );
-
-        const {
-            content: { body, msgtype },
-            sender,
-        } = replyEvent;
-
-        if (msgtype !== "m.text") {
-            await client.sendMessage(
-                roomId,
-                "This message is not a text message.",
-                { replyTo: eventId },
-            );
-            return;
-        }
-
-        if (!body) {
-            await client.sendMessage(roomId, "This message is empty.", {
-                replyTo: eventId,
+        if (!replyTarget) {
+            await client.sendMessage(roomId, "This message is not a reply.", {
+                replyTo: id,
             });
             return;
         }
 
-        const { displayname, avatar_url } = (await client.client
-            .getUserProfile(sender)
-            .catch(() => ({}))) as {
-            displayname?: string;
-            avatar_url?: string;
-        };
+        if (replyTarget.type !== "text") {
+            await client.sendMessage(
+                roomId,
+                "This is not a reply to a text message.",
+                {
+                    replyTo: id,
+                },
+            );
+            return;
+        }
+
+        const { sender, body } = replyTarget;
+
+        if (!body) {
+            await client.sendMessage(roomId, "The reply message is empty.", {
+                replyTo: id,
+            });
+            return;
+        }
+
+        const { displayname, avatar_url } = await sender.getProfile();
 
         let avatarFile: { contentType: string; data: Buffer } | undefined;
 
@@ -81,7 +67,7 @@ export default defineCommand({
             ? `data:${avatarFile.contentType};base64,${await avatarFile.data.toBase64()}`
             : undefined;
 
-        const url = await getQuote(sender.replace("@", ""), `“${body}”`, {
+        const url = await getQuote(sender.mxid.replace("@", ""), `“${body}”`, {
             avatarUrl: avatarDataUrl,
             displayName: displayname,
         });
@@ -89,7 +75,7 @@ export default defineCommand({
         const mxcUrl = await client.client.uploadContentFromUrl(url);
 
         await client.sendMedia(roomId, mxcUrl, {
-            replyTo: eventId,
+            replyTo: id,
             metadata: {
                 contentType: "image/png",
                 height: 630,

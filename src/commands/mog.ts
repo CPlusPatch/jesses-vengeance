@@ -1,3 +1,4 @@
+import { client } from "../../index.ts";
 import { UserArgument } from "../classes/arguments.ts";
 import { defineCommand } from "../commands.ts";
 import { config } from "../config.ts";
@@ -11,15 +12,13 @@ export default defineCommand({
             canBeOutsideRoom: true,
         }),
     },
-    execute: async (client, { target }, { roomId, event }): Promise<void> => {
-        const { sender } = event;
-
-        if (!config.users.admin.includes(sender)) {
+    execute: async ({ target }, { roomId, sender, id }): Promise<void> => {
+        if (!config.users.admin.includes(sender.mxid)) {
             await client.sendMessage(
                 roomId,
                 "You are not authorized to use this command",
                 {
-                    replyTo: event.eventId,
+                    replyTo: id,
                 },
             );
             return;
@@ -50,7 +49,7 @@ export default defineCommand({
 
         if (!profile) {
             await client.sendMessage(roomId, "User does not have a profile", {
-                replyTo: event.eventId,
+                replyTo: id,
             });
             return;
         }
