@@ -12,14 +12,7 @@ import {
     type SeriesType,
     type TimeScaleOptions,
 } from "lightweight-charts";
-import {
-    defineExpose,
-    defineProps,
-    onMounted,
-    onUnmounted,
-    ref,
-    watch,
-} from "vue";
+import { onMounted, onUnmounted, ref, watch } from "vue";
 
 const {
     name,
