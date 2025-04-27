@@ -69,11 +69,6 @@ export default defineCommand({
         const isSuccessful = Math.random() < SUCCESS_CHANCE;
         const senderBalance = await event.sender.getBalance();
         const targetBalance = await target.getBalance();
-        const money = clamp(
-            randint(MIN_MONEY, MAX_MONEY),
-            0,
-            Math.min(senderBalance, targetBalance),
-        );
 
         if (senderBalance < REQUIRED_BALANCE) {
             await event.reply({
@@ -97,6 +92,12 @@ export default defineCommand({
                 Math.floor(Math.random() * successfulAttacks.length)
             ] as (typeof successfulAttacks)[number];
 
+            const money = clamp(
+                randint(MIN_MONEY, MAX_MONEY),
+                0,
+                targetBalance,
+            );
+
             await event.sender.addBalance(money);
             await target.addBalance(-money);
 
@@ -109,6 +110,12 @@ export default defineCommand({
             const attack = failedAttacks[
                 Math.floor(Math.random() * failedAttacks.length)
             ] as (typeof failedAttacks)[number];
+
+            const money = clamp(
+                randint(MIN_MONEY, MAX_MONEY),
+                0,
+                senderBalance,
+            );
 
             await event.sender.addBalance(-money);
             await target.addBalance(money);
