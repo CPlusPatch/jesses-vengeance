@@ -5,7 +5,7 @@ import type {
     StringArgument,
     UserArgument,
 } from "./classes/arguments.ts";
-import type { TextEvent } from "./classes/event.ts";
+import type { MessageEvent } from "./classes/event.ts";
 
 export type PossibleArgs =
     | StringArgument<boolean>
@@ -36,7 +36,7 @@ export interface CommandManifest<
                 ? Awaited<ReturnType<ArgsRecord[K]["parse"]>>
                 : Awaited<ReturnType<ArgsRecord[K]["parse"]>> | undefined;
         },
-        event: TextEvent,
+        event: MessageEvent,
     ) => void | Promise<void>;
 }
 
@@ -49,7 +49,7 @@ export const parseArgs = async <
 >(
     args: string[],
     manifest: CommandManifest<ArgsRecord>,
-    event: TextEvent,
+    event: MessageEvent,
 ): Promise<{
     [K in keyof ArgsRecord]: Awaited<ReturnType<ArgsRecord[K]["parse"]>>;
 }> => {

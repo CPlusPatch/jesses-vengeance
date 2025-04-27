@@ -1,4 +1,3 @@
-import { client } from "../../index.ts";
 import { defineCommand } from "../commands.ts";
 import { formatBalance } from "../currency.ts";
 
@@ -47,19 +46,16 @@ export default defineCommand({
     name: "work",
     description: "Work for money",
     cooldownSeconds: 4 * 60 * 60, // 4 hours
-    execute: async (_args, { roomId, sender, id }): Promise<void> => {
+    execute: async (_args, event): Promise<void> => {
         const randomJob = jobs[
             Math.floor(Math.random() * jobs.length)
         ] as (typeof jobs)[number];
 
-        const newBalance = await sender.addBalance(randomJob.reward);
+        await event.sender.addBalance(randomJob.reward);
 
-        await client.sendMessage(
-            roomId,
-            `${randomJob.description}\n\nReward: ${formatBalance(randomJob.reward)}`,
-            {
-                replyTo: id,
-            },
-        );
+        await event.reply({
+            type: "text",
+            body: `${randomJob.description}\n\nReward: ${formatBalance(randomJob.reward)}`,
+        });
     },
 });

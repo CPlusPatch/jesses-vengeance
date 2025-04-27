@@ -1,4 +1,3 @@
-import { client } from "../../index.ts";
 import { CurrencyArgument } from "../classes/arguments.ts";
 import { UserArgument } from "../classes/arguments.ts";
 import { defineCommand } from "../commands.ts";
@@ -16,43 +15,32 @@ export default defineCommand({
             min: 0,
         }),
     },
-    execute: async (
-        { target, amount },
-        { sender, roomId, id },
-    ): Promise<void> => {
-        const senderBalance = await sender.getBalance();
+    execute: async ({ target, amount }, event): Promise<void> => {
+        const senderBalance = await event.sender.getBalance();
 
-        if (sender.mxid === target.mxid) {
-            await client.sendMessage(
-                roomId,
-                "You can't give money to yourself",
-                {
-                    replyTo: id,
-                },
-            );
+        if (event.sender.mxid === target.mxid) {
+            await event.reply({
+                type: "text",
+                body: "You can't give money to yourself",
+            });
             return;
         }
 
         if (senderBalance < amount) {
-            await client.sendMessage(
-                roomId,
-                `You don't have enough balance to give ${formatBalance(amount)}`,
-                {
-                    replyTo: id,
-                },
-            );
+            await event.reply({
+                type: "text",
+                body: `You don't have enough balance to give ${formatBalance(amount)}`,
+            });
             return;
         }
 
-        await sender.addBalance(-amount);
+        await event.sender.addBalance(-amount);
         await target.addBalance(amount);
 
-        await client.sendMessage(
-            roomId,
-            `Gave ${formatBalance(amount)} to ${target.mxid}!`,
-            {
-                replyTo: id,
-            },
-        );
+        await event.reply({
+            type: "text",
+            body: `Gave ${formatBalance(amount)} to ${target.mxid}!`,
+            mentions: [target],
+        });
     },
 });

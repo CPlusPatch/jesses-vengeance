@@ -4,7 +4,6 @@ import { input } from "@inquirer/prompts";
 import { createClient } from "@redis/client";
 import { env, file, Glob, write } from "bun";
 import consola from "consola";
-import MarkdownIt from "markdown-it";
 import {
     AutojoinRoomsMixin,
     MatrixAuth,
@@ -18,13 +17,14 @@ import {
     pickRandomResponse,
     setCooldown,
 } from "./autoresponder.ts";
-import { Event, ReactionEvent, TextEvent } from "./classes/event.ts";
+import { Event, MessageEvent, ReactionEvent } from "./classes/event.ts";
 import {
     type CommandManifest,
     type PossibleArgs,
     parseArgs,
 } from "./commands.ts";
 import { config } from "./config.ts";
+import { createEvent } from "./util/event.ts";
 import { formatRelativeTime } from "./util/math.ts";
 
 const credentialsFile = file(env.CREDENTIALS_FILE || "./credentials.json");
@@ -65,13 +65,14 @@ export class Bot {
             try {
                 await this.handleEvent(roomId, e);
             } catch (e) {
-                await this.sendMessage(
-                    roomId,
-                    `## Exeption while running command:\n\n\`\`\`\n${e}\n\`\`\``,
-                    {
-                        replyTo: (e as { event_id: string }).event_id,
-                    },
-                );
+                const [eventType, eventContent] = createEvent({
+                    type: "text",
+                    body: `## Exception while running command:\n\n\`\`\`\n${e}\n\`\`\``,
+                    replyTargetId: (e as { event_id: string }).event_id,
+                });
+                consola.error(e);
+
+                await this.client.sendEvent(roomId, eventType, eventContent);
                 return;
             }
         };
@@ -100,122 +101,6 @@ export class Bot {
     }
 
     /**
-     * Send a message to a room. Automatically parses emojis, mentions, and Markdown.
-     *
-     * @param roomId - The ID of the room to send the message to
-     * @param message - The message to send
-     */
-    public async sendMessage(
-        roomId: string,
-        message: string,
-        options?: {
-            replyTo?: string;
-            edit?: string;
-        },
-    ): Promise<string> {
-        const md = new MarkdownIt();
-        let parsed = md.render(message);
-
-        const mentions = message.match(/@[^\s]+/g)?.map((m) => m);
-        const deduplicatedMentions = [...new Set(mentions)];
-
-        if (deduplicatedMentions) {
-            for (const mention of deduplicatedMentions) {
-                parsed = parsed.replaceAll(
-                    mention,
-                    `<a href="https://matrix.to/#/${mention}">${mention}</a>`,
-                );
-            }
-        }
-
-        return await this.client.sendMessage(roomId, {
-            msgtype: "m.notice",
-            body: message,
-            format: "org.matrix.custom.html",
-            formatted_body: parsed,
-            "m.mentions": mentions
-                ? {
-                      user_ids: mentions,
-                  }
-                : undefined,
-            ...(options?.replyTo
-                ? {
-                      "m.relates_to": {
-                          "m.in_reply_to": {
-                              event_id: options.replyTo,
-                          },
-                      },
-                  }
-                : undefined),
-            ...(options?.edit
-                ? {
-                      "m.new_content": {
-                          msgtype: "m.notice",
-                          body: message,
-                          format: "org.matrix.custom.html",
-                          formatted_body: parsed,
-                      },
-                      "m.relates_to": {
-                          rel_type: "m.replace",
-                          event_id: options.edit,
-                      },
-                  }
-                : undefined),
-        });
-    }
-
-    public async sendMedia(
-        roomId: string,
-        mxcUrl: string,
-        options?: {
-            replyTo?: string;
-            edit?: string;
-            sticker?: boolean;
-            metadata?: {
-                width: number;
-                height: number;
-                contentType: string;
-                size: number;
-            };
-        },
-    ): Promise<void> {
-        await this.client.sendEvent(
-            roomId,
-            options?.sticker ? "m.sticker" : "m.room.message",
-            {
-                msgtype: options?.sticker ? undefined : "m.image",
-                body: "Image",
-                info: options?.metadata
-                    ? {
-                          w: options.metadata.width,
-                          h: options.metadata.height,
-                          mimetype: options.metadata.contentType,
-                          size: options.metadata.size,
-                      }
-                    : {},
-                url: mxcUrl,
-                ...(options?.replyTo
-                    ? {
-                          "m.relates_to": {
-                              "m.in_reply_to": {
-                                  event_id: options.replyTo,
-                              },
-                          },
-                      }
-                    : undefined),
-                ...(options?.edit
-                    ? {
-                          "m.relates_to": {
-                              rel_type: "m.replace",
-                              event_id: options.edit,
-                          },
-                      }
-                    : undefined),
-            },
-        );
-    }
-
-    /**
      * Read the commands/ directory and load all the ts files as commands.
      */
     private async loadCommands(): Promise<void> {
@@ -231,7 +116,7 @@ export class Bot {
     }
 
     private async handleReaction(event: ReactionEvent): Promise<void> {
-        const { reaction, roomId, id, sender } = event;
+        const { reaction, roomId, sender } = event;
         const target = await event.getTarget();
 
         // Delete the reacted message if the reaction is a trash emoji
@@ -254,9 +139,9 @@ export class Bot {
         const type = Event.parseMatrixType(eventData.type);
 
         switch (type) {
-            case "text":
+            case "message":
                 await this.handleMessage(
-                    new TextEvent({
+                    new MessageEvent({
                         ...eventData,
                         room_id: roomId,
                     }),
@@ -275,8 +160,8 @@ export class Bot {
         }
     }
 
-    private async handleMessage(event: TextEvent): Promise<void> {
-        const { body, sender, roomId, id } = event;
+    private async handleMessage(event: MessageEvent): Promise<void> {
+        const { body, sender, roomId } = event;
 
         if (await sender.isBot()) {
             return;
@@ -299,8 +184,9 @@ export class Bot {
             if (
                 config.users.banned.some((b) => new Glob(b).match(sender.mxid))
             ) {
-                await this.sendMessage(roomId, "🖕", {
-                    replyTo: id,
+                await event.reply({
+                    type: "text",
+                    body: "🖕",
                 });
                 return;
             }
@@ -308,9 +194,9 @@ export class Bot {
             const banDetails = await sender.isBanned();
 
             if (banDetails) {
-                await this.sendMessage(
-                    roomId,
-                    `You are banned from this bot.${
+                await event.reply({
+                    type: "text",
+                    body: `You are banned from this bot.${
                         banDetails.reason
                             ? `\n\nReason: \`${banDetails.reason}\``
                             : ""
@@ -323,10 +209,7 @@ export class Bot {
                               )}**`
                             : "**NEVER!**"
                     }`,
-                    {
-                        replyTo: id,
-                    },
-                );
+                });
                 return;
             }
 
@@ -345,15 +228,12 @@ export class Bot {
                     : false;
 
                 if (cooldownRemaining) {
-                    await this.sendMessage(
-                        roomId,
-                        `You can next use this command **${formatRelativeTime(
+                    await event.reply({
+                        type: "text",
+                        body: `You can next use this command **${formatRelativeTime(
                             cooldownRemaining * 1000,
                         )}**`,
-                        {
-                            replyTo: id,
-                        },
-                    );
+                    });
 
                     return;
                 }
@@ -367,13 +247,10 @@ export class Bot {
                 try {
                     parsedArgs = await parseArgs(args, command, event);
                 } catch (e) {
-                    await this.sendMessage(
-                        roomId,
-                        `**Error while parsing arguments:**\n\n${(e as Error).message}`,
-                        {
-                            replyTo: id,
-                        },
-                    );
+                    await event.reply({
+                        type: "text",
+                        body: `**Error while parsing arguments:**\n\n${(e as Error).message}`,
+                    });
                     return;
                 }
 
@@ -391,8 +268,9 @@ export class Bot {
                     return;
                 }
 
-                await this.sendMessage(roomId, pickRandomResponse(keyword), {
-                    replyTo: id,
+                await event.reply({
+                    type: "text",
+                    body: pickRandomResponse(keyword),
                 });
 
                 await setCooldown(this, roomId, 60);

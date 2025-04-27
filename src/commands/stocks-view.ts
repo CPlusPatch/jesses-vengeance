@@ -13,17 +13,14 @@ export default defineCommand({
         }),
     },
     disabled: true,
-    execute: async ({ stock }, { roomId, id }): Promise<void> => {
+    execute: async ({ stock }, event): Promise<void> => {
         const stockSvg = stockToSVG(stock, 24 * 60 * 60);
         const buffer = Buffer.from(stockSvg);
 
-        await client.sendMessage(
-            roomId,
-            `Visualization of stock \`${stock.name}\`:`,
-            {
-                replyTo: id,
-            },
-        );
+        await event.reply({
+            type: "text",
+            body: `Visualization of stock \`${stock.name}\`:`,
+        });
 
         const mxc = await client.client.uploadContent(
             buffer,
@@ -31,13 +28,15 @@ export default defineCommand({
             `${stock.name}-chart.svg`,
         );
 
-        await client.sendMedia(roomId, mxc, {
-            metadata: {
-                width: 900,
-                height: 500,
-                contentType: "image/svg+xml",
+        await event.reply({
+            type: "media",
+            meta: {
+                w: 900,
+                h: 500,
+                mimetype: "image/svg+xml",
                 size: buffer.byteLength,
             },
+            url: mxc,
         });
     },
 });

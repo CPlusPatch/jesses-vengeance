@@ -1,4 +1,3 @@
-import { client } from "../../index.ts";
 import { ShopItemArgument } from "../classes/arguments.ts";
 import { defineCommand } from "../commands.ts";
 import { formatBalance } from "../currency.ts";
@@ -13,30 +12,28 @@ export default defineCommand({
             description: "The item to sell",
         }),
     },
-    execute: async ({ item }, { roomId, sender, id }): Promise<void> => {
+    execute: async ({ item }, event): Promise<void> => {
         // Check if the user has already bought the item
-        if (!(await sender.ownsItem(item))) {
-            await client.sendMessage(roomId, "You don't have this item!", {
-                replyTo: id,
+        if (!(await event.sender.ownsItem(item))) {
+            await event.reply({
+                type: "text",
+                body: "You don't have this item!",
             });
             return;
         }
 
         const price = item.price * RESALE_PERCENTAGE;
 
-        const newBalance = await sender.addBalance(price);
-        await sender.removeOwnedItem(item);
+        const newBalance = await event.sender.addBalance(price);
+        await event.sender.removeOwnedItem(item);
 
-        await client.sendMessage(
-            roomId,
-            `You have sold "${item.name}" for ${formatBalance(price)}! (${
+        await event.reply({
+            type: "text",
+            body: `You have sold "${item.name}" for ${formatBalance(price)}! (${
                 RESALE_PERCENTAGE * 100
             }% of the original price)\n\nYour new balance is ${formatBalance(
                 newBalance,
             )}`,
-            {
-                replyTo: id,
-            },
-        );
+        });
     },
 });

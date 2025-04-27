@@ -1,36 +1,36 @@
 import { client } from "../../index.ts";
 import { defineCommand } from "../commands.ts";
 import { getQuote } from "../quote.ts";
+import { createEvent } from "../util/event.ts";
 
 export default defineCommand({
     name: "quote",
     description: "Make a message into a quote",
-    execute: async (_args, { roomId, getReplyTarget, id }): Promise<void> => {
-        const replyTarget = await getReplyTarget();
+    execute: async (_args, event): Promise<void> => {
+        const replyTarget = await event.getReplyTarget();
 
         if (!replyTarget) {
-            await client.sendMessage(roomId, "This message is not a reply.", {
-                replyTo: id,
+            await event.reply({
+                type: "text",
+                body: "This message is not a reply.",
             });
             return;
         }
 
-        if (replyTarget.type !== "text") {
-            await client.sendMessage(
-                roomId,
-                "This is not a reply to a text message.",
-                {
-                    replyTo: id,
-                },
-            );
+        if (replyTarget.type !== "message") {
+            await event.reply({
+                type: "text",
+                body: "This is not a reply to a text message.",
+            });
             return;
         }
 
         const { sender, body } = replyTarget;
 
         if (!body) {
-            await client.sendMessage(roomId, "The reply message is empty.", {
-                replyTo: id,
+            await event.reply({
+                type: "text",
+                body: "The reply message is empty.",
             });
             return;
         }
@@ -74,14 +74,18 @@ export default defineCommand({
 
         const mxcUrl = await client.client.uploadContentFromUrl(url);
 
-        await client.sendMedia(roomId, mxcUrl, {
-            replyTo: id,
-            metadata: {
-                contentType: "image/png",
-                height: 630,
-                width: 1200,
-                size: undefined as unknown as number,
-            },
-        });
+        await client.client.sendEvent(
+            event.roomId,
+            ...createEvent({
+                type: "media",
+                url: mxcUrl,
+                replyTargetId: event.id,
+                meta: {
+                    mimetype: "image/png",
+                    h: 630,
+                    w: 1200,
+                },
+            }),
+        );
     },
 });

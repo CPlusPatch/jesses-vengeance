@@ -1,7 +1,12 @@
 import { client } from "../../index.ts";
+import {
+    createEvent,
+    type MediaEventCreationOptions,
+    type TextEventCreationOptions,
+} from "../util/event.ts";
 import { User } from "./user.ts";
 
-type EventType = "reaction" | "text";
+type EventType = "reaction" | "message";
 
 export class Event {
     public id: string;
@@ -51,7 +56,7 @@ export class Event {
     ): EventType | null {
         switch (type) {
             case "m.room.message":
-                return "text";
+                return "message";
             case "m.reaction":
                 return "reaction";
             default:
@@ -81,29 +86,74 @@ export class ReactionEvent extends Event {
     }
 }
 
-export class TextEvent extends Event {
+export class MessageEvent extends Event {
     public get body(): string {
         return Event.parseBody(this.content.body);
     }
 
-    public async getReplyTarget(): Promise<TextEvent | null> {
+    public async getReplyTarget(): Promise<MessageEvent | null> {
         if (this.inReplyToId) {
             const eventData = await client.client.getEvent(
                 this.roomId,
                 this.inReplyToId,
             );
 
-            if (Event.parseMatrixType(eventData.type) !== "text") {
+            if (Event.parseMatrixType(eventData.type) !== "message") {
                 return null;
             }
 
-            return new TextEvent(eventData);
+            return new MessageEvent(eventData);
         }
 
         return null;
     }
 
     public isText(): boolean {
-        return this.content.msgtype === "m.text";
+        return ["m.text", "m.notice"].includes(this.content.msgtype);
+    }
+
+    public async reply(
+        options:
+            | Omit<TextEventCreationOptions, "replyTargetId">
+            | Omit<MediaEventCreationOptions, "replyTargetId">,
+    ): Promise<string> {
+        const { roomId, id } = this;
+
+        console.log(options);
+
+        const [eventType, eventContent] = createEvent({
+            ...options,
+            replyTargetId: id,
+        });
+
+        return await client.client.sendEvent(roomId, eventType, eventContent);
+    }
+
+    public async edit(
+        options:
+            | Omit<TextEventCreationOptions, "editTargetId" | "replyTargetId">
+            | Omit<MediaEventCreationOptions, "editTargetId" | "replyTargetId">,
+    ): Promise<string> {
+        const { roomId, id, inReplyToId } = this;
+
+        const [eventType, eventContent] = createEvent({
+            ...options,
+            editTargetId: id,
+            replyTargetId: inReplyToId ?? undefined,
+        });
+
+        return await client.client.sendEvent(roomId, eventType, eventContent);
+    }
+
+    public async react(emoji: string): Promise<string> {
+        const { roomId, id } = this;
+
+        const [eventType, eventContent] = createEvent({
+            type: "reaction",
+            emoji,
+            targetId: id,
+        });
+
+        return await client.client.sendEvent(roomId, eventType, eventContent);
     }
 }

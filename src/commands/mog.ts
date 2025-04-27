@@ -12,15 +12,12 @@ export default defineCommand({
             canBeOutsideRoom: true,
         }),
     },
-    execute: async ({ target }, { roomId, sender, id }): Promise<void> => {
-        if (!config.users.admin.includes(sender.mxid)) {
-            await client.sendMessage(
-                roomId,
-                "You are not authorized to use this command",
-                {
-                    replyTo: id,
-                },
-            );
+    execute: async ({ target }, event): Promise<void> => {
+        if (!config.users.admin.includes(event.sender.mxid)) {
+            await event.reply({
+                type: "text",
+                body: "You are not authorized to use this command",
+            });
             return;
         }
 
@@ -32,7 +29,7 @@ export default defineCommand({
                 );
 
             await client.client.sendStateEvent(
-                roomId,
+                event.roomId,
                 "m.room.member",
                 await client.client.getUserId(),
                 {
@@ -48,8 +45,9 @@ export default defineCommand({
         const profile = await target.getProfile().catch(() => null);
 
         if (!profile) {
-            await client.sendMessage(roomId, "User does not have a profile", {
-                replyTo: id,
+            await event.reply({
+                type: "text",
+                body: "User does not have a profile",
             });
             return;
         }
@@ -57,7 +55,7 @@ export default defineCommand({
         const { displayname, avatar_url } = profile;
 
         await client.client.sendStateEvent(
-            roomId,
+            event.roomId,
             "m.room.member",
             await client.client.getUserId(),
             {
