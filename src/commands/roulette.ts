@@ -36,29 +36,27 @@ export default defineCommand({
 
         await Bun.sleep(1000);
 
-        await client.sendMessage(roomId, `The wheel landed on ${result}!`, {
-            replyTo: id,
-            edit: spinEventId,
-        });
-
         if (result === 1) {
             const newBalance = await sender.addBalance(wager);
 
             await client.sendMessage(
                 roomId,
-                `You **win**! Your wager has been DOUBLED!\n\nNew balance: ${formatBalance(newBalance)}`,
+                `The wheel landed on ${result}!\n\nYou **win**! Your wager has been DOUBLED!\n\nNew balance: ${formatBalance(newBalance)}`,
+                { replyTo: id, edit: spinEventId },
             );
         } else if (result === 6) {
             const newBalance = await sender.addBalance(-wager);
             await sender.ban(60 * 10, "Has a hole through the cranium! 💀");
             await client.sendMessage(
                 roomId,
-                `You've been **SHOT**! You lost your wager, and you are banned from this bot for 10 minutes.\n\nNew balance: ${formatBalance(newBalance)}`,
+                `The wheel landed on ${result}!\n\nYou've been **SHOT**! You lost your wager, and you are banned from this bot for 10 minutes.\n\nNew balance: ${formatBalance(newBalance)}`,
+                { replyTo: id, edit: spinEventId },
             );
         } else {
             await client.sendMessage(
                 roomId,
-                "The wheel landed on a safe number! Your wager has been returned.",
+                `The wheel landed on ${result}!\n\nThe wheel landed on a safe number! Your wager has been returned.`,
+                { replyTo: id, edit: spinEventId },
             );
         }
     },
