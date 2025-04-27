@@ -316,12 +316,11 @@ export class Bot {
                             : ""
                     }\n\nBan expires ${
                         banDetails.duration > 0
-                            ? `in **${Math.floor(
-                                  (banDetails.timestamp +
+                            ? `**${formatRelativeTime(
+                                  banDetails.timestamp +
                                       banDetails.duration -
-                                      Date.now()) /
-                                      1000,
-                              )} seconds**`
+                                      Date.now(),
+                              )}**`
                             : "**NEVER!**"
                     }`,
                     {
