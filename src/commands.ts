@@ -29,6 +29,7 @@ export interface CommandManifest<
     aliases?: string[];
     args?: ArgsRecord;
     disabled?: boolean;
+    cooldownSeconds?: number;
     execute: (
         args: {
             [K in keyof ArgsRecord]: ArgsRecord[K] extends RequiredArgs

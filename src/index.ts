@@ -25,6 +25,7 @@ import {
     parseArgs,
 } from "./commands.ts";
 import { config } from "./config.ts";
+import { formatRelativeTime } from "./util/math.ts";
 
 const credentialsFile = file(env.CREDENTIALS_FILE || "./credentials.json");
 
@@ -336,6 +337,30 @@ export class Bot {
             );
 
             if (command) {
+                // Check cooldown
+                const cooldownRemaining = command.cooldownSeconds
+                    ? await sender.isUnderCooldown(
+                          command.name,
+                          command.cooldownSeconds,
+                      )
+                    : false;
+
+                if (cooldownRemaining) {
+                    await this.sendMessage(
+                        roomId,
+                        `You can next use this command **${formatRelativeTime(
+                            cooldownRemaining * 1000,
+                        )}**`,
+                        {
+                            replyTo: id,
+                        },
+                    );
+
+                    return;
+                }
+
+                await sender.updateLastCommandUsage(command.name, new Date());
+
                 const args = body.split(" ").slice(1);
 
                 let parsedArgs: Awaited<ReturnType<typeof parseArgs>>;

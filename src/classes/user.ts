@@ -8,6 +8,8 @@ const CURRENCY_SYMBOL = "B$";
 const CURRENCY_NAME = "bitchcoins";
 const BALANCES_KEY = "balances";
 const BANNED_USERS_KEY = "banned_users";
+const COMMAND_USE_KEY = "command_use";
+
 interface UserProfile {
     displayname?: string;
     avatar_url?: string;
@@ -122,5 +124,51 @@ export class User {
         const items = await this.getOwnedItems();
 
         return items.some((i) => i.id === item.id);
+    }
+
+    public async updateLastCommandUsage(
+        commandName: string,
+        timestamp: Date,
+    ): Promise<void> {
+        await client.redis.hSet(
+            `${COMMAND_USE_KEY}:${this.mxid}`,
+            commandName,
+            timestamp.getTime(),
+        );
+    }
+
+    public async getLastCommandUsage(
+        commandName: string,
+    ): Promise<Date | null> {
+        const lastUsed = await client.redis.hGet(
+            `${COMMAND_USE_KEY}:${this.mxid}`,
+            commandName,
+        );
+
+        if (!lastUsed) {
+            return null;
+        }
+
+        return new Date(Number(lastUsed));
+    }
+
+    public async isUnderCooldown(
+        commandName: string,
+        cooldownSecs: number,
+    ): Promise<number | false> {
+        const lastUsed = await this.getLastCommandUsage(commandName);
+
+        if (!lastUsed) {
+            return false;
+        }
+
+        const cooldownEnd = new Date(lastUsed.getTime() + cooldownSecs * 1000);
+        const remainingTime = cooldownEnd.getTime() - Date.now();
+
+        if (remainingTime > 0) {
+            return Math.ceil(remainingTime / 1000);
+        }
+
+        return false;
     }
 }
