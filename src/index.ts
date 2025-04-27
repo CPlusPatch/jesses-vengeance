@@ -230,7 +230,10 @@ export class Bot {
 
         for (const command of commands) {
             const module = await import(`./commands/${command}`);
-            this.commands.push(module.default);
+
+            if (!module.default.disabled) {
+                this.commands.push(module.default);
+            }
         }
     }
 

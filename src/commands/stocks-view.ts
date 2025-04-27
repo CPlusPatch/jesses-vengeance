@@ -11,6 +11,7 @@ export default defineCommand({
             description: "The stock to view",
         }),
     },
+    disabled: true,
     execute: async (client, { stock }, { roomId, event }): Promise<void> => {
         const stockSvg = stockToSVG(stock, 24 * 60 * 60);
         const buffer = Buffer.from(stockSvg);

@@ -30,6 +30,7 @@ export interface CommandManifest<
     description?: string;
     aliases?: string[];
     args?: ArgsRecord;
+    disabled?: boolean;
     execute: (
         client: Bot,
         args: {
