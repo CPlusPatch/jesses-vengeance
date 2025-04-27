@@ -26,6 +26,7 @@ import {
 import { config } from "./config.ts";
 import { createEvent } from "./util/event.ts";
 import { formatRelativeTime } from "./util/math.ts";
+import { calculateResponse } from "./util/dad.ts";
 
 const credentialsFile = file(env.CREDENTIALS_FILE || "./credentials.json");
 
@@ -273,6 +274,23 @@ export class Bot {
                 await event.reply({
                     type: "text",
                     body: pickRandomResponse(keyword),
+                });
+
+                await setCooldown(this, event.roomId, 60);
+            }
+
+            // Dadbot functionality
+            const response = calculateResponse(event.body, event.sender);
+
+            if (response) {
+                if (await isUnderCooldown(this, event.roomId)) {
+                    return;
+                }
+
+                await event.reply({
+                    type: "text",
+                    body: response,
+                    mentions: [event.sender],
                 });
 
                 await setCooldown(this, event.roomId, 60);
