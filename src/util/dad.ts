@@ -1,3 +1,8 @@
+/**
+ * Inspired by dadbot
+ * @see https://github.com/AlekEagle/dadbot/blob/master/src/events/AutoResponse.ts
+ * Thanks, dad!
+ */
 import type { User } from "../classes/user.ts";
 
 const IM_MATCH = /\b((?:i|l)(?:(?:'|`|‛|‘|’|′|‵)?m| am)) ([\s\S]*)/i;
@@ -7,7 +12,7 @@ const SHUT_UP_MATCH = /\b(stfu|shut\s(?:the\s)?(?:fuck\s)?up)\b/i;
 const GOODBYE_MATCH = /\b(?:good)? ?bye\b/i;
 const THANKS_MATCH = /\b(?:thank you|thanks) bot\b/i;
 
-/*
+/**
  * Calculates whether a message has enough uppercase characters to be considered "shouting"
  */
 function isShouting(text: string): boolean {
