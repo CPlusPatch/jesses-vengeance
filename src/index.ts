@@ -244,7 +244,7 @@ export class Bot {
             // Check if the message is from the bot
             await this.client.redactEvent(
                 roomId,
-                id,
+                target.id,
                 `Redaction requested by ${sender.mxid}`,
             );
         }
