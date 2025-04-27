@@ -129,8 +129,6 @@ export class MessageEvent extends Event {
     ): Promise<string> {
         const { roomId, id } = this;
 
-        console.log(options);
-
         const [eventType, eventContent] = createEvent({
             ...options,
             replyTargetId: id,
