@@ -116,21 +116,20 @@ export class Bot {
     }
 
     private async handleReaction(event: ReactionEvent): Promise<void> {
-        const { reaction, roomId, sender } = event;
         const target = await event.getTarget();
 
         // Delete the reacted message if the reaction is a trash emoji
         if (
-            reaction &&
+            event.reaction &&
             target &&
-            ["🗑️", "🚮", "🚫", "❌️"].includes(reaction) &&
+            ["🗑️", "🚮", "🚫", "❌️"].includes(event.reaction) &&
             (await target.sender.isBot())
         ) {
             // Check if the message is from the bot
             await this.client.redactEvent(
-                roomId,
+                event.roomId,
                 target.id,
-                `Redaction requested by ${sender.mxid}`,
+                `Redaction requested by ${event.sender.mxid}`,
             );
         }
     }
@@ -161,9 +160,7 @@ export class Bot {
     }
 
     private async handleMessage(event: MessageEvent): Promise<void> {
-        const { body, sender, roomId } = event;
-
-        if (await sender.isBot()) {
+        if (await event.sender.isBot()) {
             return;
         }
 
@@ -171,8 +168,8 @@ export class Bot {
             return;
         }
 
-        if (body.startsWith(config.commands.prefix)) {
-            const commandName = body
+        if (event.body.startsWith(config.commands.prefix)) {
+            const commandName = event.body
                 .split(" ")[0]
                 ?.slice(config.commands.prefix.length)
                 .toLowerCase();
@@ -182,7 +179,9 @@ export class Bot {
             }
 
             if (
-                config.users.banned.some((b) => new Glob(b).match(sender.mxid))
+                config.users.banned.some((b) =>
+                    new Glob(b).match(event.sender.mxid),
+                )
             ) {
                 await event.reply({
                     type: "text",
@@ -191,7 +190,7 @@ export class Bot {
                 return;
             }
 
-            const banDetails = await sender.isBanned();
+            const banDetails = await event.sender.isBanned();
 
             if (banDetails) {
                 await event.reply({
@@ -221,7 +220,7 @@ export class Bot {
             if (command) {
                 // Check cooldown
                 const cooldownRemaining = command.cooldownSeconds
-                    ? await sender.isUnderCooldown(
+                    ? await event.sender.isUnderCooldown(
                           command.name,
                           command.cooldownSeconds,
                       )
@@ -238,9 +237,12 @@ export class Bot {
                     return;
                 }
 
-                await sender.updateLastCommandUsage(command.name, new Date());
+                await event.sender.updateLastCommandUsage(
+                    command.name,
+                    new Date(),
+                );
 
-                const args = body.split(" ").slice(1);
+                const args = event.body.split(" ").slice(1);
 
                 let parsedArgs: Awaited<ReturnType<typeof parseArgs>>;
 
@@ -255,16 +257,16 @@ export class Bot {
                 }
 
                 consola.debug(
-                    `User ${sender.mxid} executed command ${commandName} with args ${JSON.stringify(args)}`,
+                    `User ${event.sender.mxid} executed command ${commandName} with args ${JSON.stringify(args)}`,
                 );
 
                 await command.execute(parsedArgs, event);
             }
         } else {
-            const keyword = detectKeyword(body);
+            const keyword = detectKeyword(event.body);
 
             if (keyword) {
-                if (await isUnderCooldown(this, roomId)) {
+                if (await isUnderCooldown(this, event.roomId)) {
                     return;
                 }
 
@@ -273,7 +275,7 @@ export class Bot {
                     body: pickRandomResponse(keyword),
                 });
 
-                await setCooldown(this, roomId, 60);
+                await setCooldown(this, event.roomId, 60);
             }
         }
     }
