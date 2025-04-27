@@ -38,6 +38,7 @@ export class Event {
         this.content = event.content;
         this.inReplyToId = replyId;
     }
+
     public static async fromMatrixEventId(
         roomId: string,
         id: string,
@@ -89,6 +90,15 @@ export class ReactionEvent extends Event {
 export class MessageEvent extends Event {
     public get body(): string {
         return Event.parseBody(this.content.body);
+    }
+
+    public static async fromMatrixEventId(
+        roomId: string,
+        id: string,
+    ): Promise<MessageEvent | null> {
+        const eventData = await client.client.getEvent(roomId, id);
+
+        return new MessageEvent(eventData);
     }
 
     public async getReplyTarget(): Promise<MessageEvent | null> {

@@ -71,9 +71,7 @@ export default defineCommand({
                 type: "text",
                 body: `You failed to steal from ${target.mxid} ! As a punishment, you have to give ${formatBalance(
                     punishment,
-                )} to ${target.mxid} !\n\n${target.mxid} balance: ${formatBalance(
-                    newTargetBalance,
-                )}\n\n${event.sender.mxid} balance: ${formatBalance(newSenderBalance)}${
+                )} to ${target.mxid} !${
                     hasVan
                         ? `\n\nVan towed! Tow charge: ${formatBalance(towCharge)}.`
                         : ""

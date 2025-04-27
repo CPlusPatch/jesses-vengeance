@@ -2,7 +2,6 @@ import { client } from "../../index.ts";
 import { CurrencyArgument } from "../classes/arguments.ts";
 import { MessageEvent } from "../classes/event.ts";
 import { defineCommand } from "../commands.ts";
-import { formatBalance } from "../currency.ts";
 import { randint } from "../util/math.ts";
 
 export default defineCommand({
@@ -39,21 +38,21 @@ export default defineCommand({
         await Bun.sleep(1000);
 
         if (result === 1) {
-            const newBalance = await event.sender.addBalance(wager);
+            await event.sender.addBalance(wager);
 
             await spinEvent.edit({
                 type: "text",
-                body: `The wheel landed on ${result}!\n\nYou **win**! Your wager has been DOUBLED!\n\nNew balance: ${formatBalance(newBalance)}`,
+                body: `The wheel landed on ${result}!\n\nYou **win**! Your wager has been DOUBLED!`,
             });
         } else if (result === 6) {
-            const newBalance = await event.sender.addBalance(-wager);
+            await event.sender.addBalance(-wager);
             await event.sender.ban(
                 60 * 10,
                 "Has a hole through the cranium! 💀",
             );
             await spinEvent.edit({
                 type: "text",
-                body: `The wheel landed on ${result}!\n\nYou've been **SHOT**! You lost your wager, and you are banned from this bot for 10 minutes.\n\nNew balance: ${formatBalance(newBalance)}`,
+                body: `The wheel landed on ${result}!\n\nYou've been **SHOT**! You lost your wager, and you are banned from this bot for 10 minutes.`,
             });
         } else {
             await spinEvent.edit({

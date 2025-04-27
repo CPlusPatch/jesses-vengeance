@@ -1,5 +1,5 @@
 import { defineCommand } from "../commands.ts";
-import { formatBalance } from "../currency.ts";
+import { formatBalanceRaw } from "../currency.ts";
 
 export default defineCommand({
     name: "balance",
@@ -8,9 +8,6 @@ export default defineCommand({
     execute: async (_args, event): Promise<void> => {
         const senderBalance = await event.sender.getBalance();
 
-        await event.reply({
-            type: "text",
-            body: `Your balance is ${formatBalance(senderBalance)}`,
-        });
+        await event.react(formatBalanceRaw(senderBalance));
     },
 });

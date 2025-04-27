@@ -24,16 +24,14 @@ export default defineCommand({
 
         const price = item.price * RESALE_PERCENTAGE;
 
-        const newBalance = await event.sender.addBalance(price);
+        await event.sender.addBalance(price);
         await event.sender.removeOwnedItem(item);
 
         await event.reply({
             type: "text",
             body: `You have sold "${item.name}" for ${formatBalance(price)}! (${
                 RESALE_PERCENTAGE * 100
-            }% of the original price)\n\nYour new balance is ${formatBalance(
-                newBalance,
-            )}`,
+            }% of the original price)`,
         });
     },
 });

@@ -68,6 +68,10 @@ export class User {
         );
     }
 
+    public async unban(): Promise<void> {
+        await client.redis.hDel(BANNED_USERS_KEY, this.mxid);
+    }
+
     public async getBalance(): Promise<number> {
         const score = await client.redis.zScore(BALANCES_KEY, this.mxid);
 

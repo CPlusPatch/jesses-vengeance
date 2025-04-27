@@ -41,6 +41,10 @@ export const deleteUserBalance = async (
 };
 
 export const formatBalance = (balance: number): string => {
+    return `\`${formatBalanceRaw(balance)}\``;
+};
+
+export const formatBalanceRaw = (balance: number): string => {
     const formatted = Intl.NumberFormat("en-US", {
         style: "currency",
         currency: "USD",
@@ -48,9 +52,9 @@ export const formatBalance = (balance: number): string => {
         maximumFractionDigits: 2,
     })
         .format(balance)
-        .replace("$", "B$");
+        .replace("$", CURRENCY_SYMBOL);
 
-    return `\`${formatted}\``;
+    return formatted;
 };
 
 export const isValidNonNegativeAmount = (amount: number): boolean => {

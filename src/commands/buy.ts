@@ -30,14 +30,14 @@ export default defineCommand({
             return;
         }
 
-        const newBalance = await event.sender.addBalance(-item.price);
+        await event.sender.addBalance(-item.price);
         await event.sender.addOwnedItem(item);
 
         await event.reply({
             type: "text",
             body: `You have bought "${item.name}" for ${formatBalance(
                 item.price,
-            )}!\n\nYour new balance is ${formatBalance(newBalance)}`,
+            )}!`,
         });
     },
 });
