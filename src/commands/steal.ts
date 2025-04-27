@@ -55,7 +55,7 @@ export default defineCommand({
                 )} from ${target.mxid} ! They're mad!\n\n${target.mxid} balance: ${formatBalance(
                     newTargetBalance,
                 )}\n\n${event.sender.mxid} balance: ${formatBalance(newSenderBalance)}`,
-                mentions: [target],
+                mentions: [target, event.sender],
             });
         } else {
             const punishment = getStealAmount() * senderBalance;
@@ -77,7 +77,7 @@ export default defineCommand({
                         ? `\n\nVan towed! Tow charge: ${formatBalance(towCharge)}.`
                         : ""
                 }`,
-                mentions: [target],
+                mentions: [target, event.sender],
             });
         }
     },
