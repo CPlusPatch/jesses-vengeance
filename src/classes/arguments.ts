@@ -70,6 +70,7 @@ export class UserArgument<IsRequired extends boolean> extends Argument<
             description: string;
             default: User;
             canBeOutsideRoom: boolean;
+            allowSender: boolean;
         }>,
     ) {
         super(name, required, options);
@@ -124,6 +125,10 @@ export class UserArgument<IsRequired extends boolean> extends Argument<
             throw new ArgumentValidationError(
                 "Cannot use the MXID of this bot.",
             );
+        }
+
+        if (!this.options?.allowSender && userId === event.sender.mxid) {
+            throw new ArgumentValidationError("Cannot use yourself.");
         }
 
         if (
