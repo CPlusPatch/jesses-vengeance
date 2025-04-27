@@ -21,6 +21,7 @@ export default defineCommand({
             description: "The user to steal from",
         }),
     },
+    cooldownSeconds: 60,
     execute: async ({ target }, event): Promise<void> => {
         const senderBalance = await event.sender.getBalance();
 
@@ -61,7 +62,7 @@ export default defineCommand({
             const towCharge = punishment * 0.4;
 
             let newSenderBalance = await event.sender.addBalance(-punishment);
-            const newTargetBalance = await target.addBalance(punishment);
+            await target.addBalance(punishment);
 
             if (hasVan) {
                 newSenderBalance = await event.sender.addBalance(-towCharge);
