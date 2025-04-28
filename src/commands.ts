@@ -27,6 +27,7 @@ export interface CommandManifest<
     name: string;
     description?: string;
     aliases?: string[];
+    category?: string;
     args?: ArgsRecord;
     disabled?: boolean;
     cooldownSeconds?: number;

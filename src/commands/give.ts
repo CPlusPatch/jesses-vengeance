@@ -15,6 +15,7 @@ export default defineCommand({
             min: 0,
         }),
     },
+    category: "cash",
     execute: async ({ target, amount }, event): Promise<void> => {
         const senderBalance = await event.sender.getBalance();
 

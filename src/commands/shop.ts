@@ -5,6 +5,7 @@ import { shopItems } from "../shop.ts";
 export default defineCommand({
     name: "shop",
     description: "View the shop",
+    category: "shop",
     execute: async (_args, event): Promise<void> => {
         await event.reply({
             type: "text",

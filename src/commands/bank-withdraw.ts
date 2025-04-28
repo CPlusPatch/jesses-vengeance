@@ -6,6 +6,7 @@ export default defineCommand({
     name: "bank:withdraw",
     description: "Withdraw money from your bank to pay for things",
     aliases: ["bw"],
+    category: "bank",
     args: {
         amount: new CurrencyArgument("amount", true, {
             description: "How much money to withdraw",

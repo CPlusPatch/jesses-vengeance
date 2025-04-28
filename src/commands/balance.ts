@@ -5,6 +5,7 @@ export default defineCommand({
     name: "balance",
     description: "Check your balance",
     aliases: ["bal"],
+    category: "cash",
     execute: async (_args, event): Promise<void> => {
         const senderBalance = await event.sender.getBalance();
 

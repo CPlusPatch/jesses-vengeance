@@ -12,6 +12,7 @@ export default defineCommand({
             description: "The item to sell",
         }),
     },
+    category: "shop",
     execute: async ({ item }, event): Promise<void> => {
         // Check if the user has already bought the item
         if (!(await event.sender.ownsItem(item))) {

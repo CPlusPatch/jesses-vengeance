@@ -3,6 +3,7 @@ import { defineCommand } from "../commands.ts";
 export default defineCommand({
     name: "items",
     description: "List your owned items",
+    category: "shop",
     execute: async (_args, event): Promise<void> => {
         const owned = await event.sender.getOwnedItems();
 

@@ -45,6 +45,7 @@ const jobs: {
 export default defineCommand({
     name: "work",
     description: "Work for money",
+    category: "cash",
     cooldownSeconds: 4 * 60 * 60, // 4 hours
     execute: async (_args, event): Promise<void> => {
         const randomJob = jobs[

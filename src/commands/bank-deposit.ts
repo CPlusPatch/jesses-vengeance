@@ -6,6 +6,7 @@ export default defineCommand({
     name: "bank:deposit",
     description: "Deposit money into your bank for safekeeping",
     aliases: ["bd"],
+    category: "bank",
     args: {
         amount: new CurrencyArgument("amount", true, {
             description: "How much money to deposit",

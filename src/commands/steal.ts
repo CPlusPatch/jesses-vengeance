@@ -22,6 +22,7 @@ export default defineCommand({
         }),
     },
     cooldownSeconds: 60,
+    category: "cash",
     execute: async ({ target }, event): Promise<void> => {
         const senderBalance = await event.sender.getBalance();
 

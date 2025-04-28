@@ -8,6 +8,7 @@ export default defineCommand({
     name: "bank:interest",
     description: "Collect interest from your bank",
     aliases: ["bi"],
+    category: "bank",
     cooldownSeconds: 12 * 60 * 60, // 12 hours
     execute: async (_args, event): Promise<void> => {
         const senderBalance = await event.sender.getBankBalance();
