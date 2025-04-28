@@ -17,9 +17,11 @@ import {
 import Chart from "./components/Chart.vue";
 import StatCard from "./components/StatCard.vue";
 
+const stockName =
+    new URLSearchParams(window.location.search).get("stock") || "JESS";
 const stock: Stock = {
-    name: "JESS",
-    parameters: stocks.JESS as StockParameters,
+    name: stockName,
+    parameters: stocks[stockName] as StockParameters,
 };
 
 const data: Ref<{ date: Date; price: number }[]> = ref([]);
@@ -74,7 +76,7 @@ onUnmounted(() => {
 		<div
 			class="flex-1 w-full rounded-lg overflow-hidden border border-white/20">
 			<Chart
-				name="JESS"
+				:name="stockName"
 				:type="BaselineSeries"
 				:data="
 					data.map((d) => ({
@@ -106,12 +108,12 @@ onUnmounted(() => {
 					},
 				}"
 				:seriesOptions="({
-				priceScaleId: 'JESS',
+				priceScaleId: stockName,
 				baseValue: {
 					price: stock.parameters.initialPrice,
 					type: 'price',
 				},
-				title: 'JESS',	
+				title: stockName,	
 				lastPriceAnimation: LastPriceAnimationMode.Continuous,
 			} as DeepPartial<BaselineSeriesOptions>)"
 				:timeScaleOptions="{}"

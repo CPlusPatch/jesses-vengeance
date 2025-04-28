@@ -21,6 +21,13 @@ const DEFAULT_STOCK_PARAMETERS: StockParameters = {
 
 export const stocks: Record<string, StockParameters> = {
     JESS: DEFAULT_STOCK_PARAMETERS,
+    BTC: {
+        initialPrice: 4_000,
+        volatility: 0.6,
+        trendStrength: 0.1,
+        jumpMagnitude: 0.2,
+        jumpProbability: 0.001,
+    },
 };
 
 /**
