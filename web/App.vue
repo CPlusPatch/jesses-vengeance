@@ -1,5 +1,6 @@
 <script setup lang="ts">
 /** biome-ignore-all lint/correctness/noUnusedImports: <explanation> */
+import { useUrlSearchParams } from "@vueuse/core";
 import {
     BaselineSeries,
     type BaselineSeriesOptions,
@@ -8,21 +9,23 @@ import {
     type DeepPartial,
     LastPriceAnimationMode,
 } from "lightweight-charts";
-import { onUnmounted, type Ref, ref } from "vue";
-import {
-    type Stock,
-    type StockParameters,
-    stocks,
-} from "../src/util/finance.ts";
+import { computed, onUnmounted, type Ref, ref } from "vue";
+import { type StockParameters, stocks } from "../src/util/finance.ts";
 import Chart from "./components/Chart.vue";
 import StatCard from "./components/StatCard.vue";
 
-const stockName =
-    new URLSearchParams(window.location.search).get("stock") || "JESS";
-const stock: Stock = {
-    name: stockName,
-    parameters: stocks[stockName] as StockParameters,
-};
+const params = useUrlSearchParams();
+
+const stockName = computed({
+    get: () => (params.stock as string) ?? "JESS",
+    set: (val) => {
+        params.stock = val;
+        data.value = [];
+    },
+});
+const stockParameters = computed(
+    () => stocks[stockName.value] ?? (stocks.JESS as StockParameters),
+);
 
 const data: Ref<{ date: Date; price: number }[]> = ref([]);
 
@@ -35,8 +38,8 @@ const formatPrice = (price: number): string =>
     }).format(price);
 
 const internal = setInterval(async () => {
-    const priceJson = await fetch(`/api/v0/stocks/${stock.name}`).then((r) =>
-        r.json(),
+    const priceJson = await fetch(`/api/v0/stocks/${stockName.value}`).then(
+        (r) => r.json(),
     );
 
     data.value.push({
@@ -48,15 +51,27 @@ const internal = setInterval(async () => {
 onUnmounted(() => {
     clearInterval(internal);
 });
+
+const log = console.log;
 </script>
 
 <template>
 	<div class="h-dvh flex flex-col gap-4 p-4 bg-black">
+        <select
+            @change="(e) => (stockName = (e.target as HTMLSelectElement).value)"
+            class="bg-black text-white border border-white/20 rounded-lg p-2">
+            <option
+                v-for="(stock, index) in Object.keys(stocks)"
+                :key="index"
+                :value="stock">
+                {{ stock }}
+            </option>
+        </select>
 		<div class="grid gap-4 grid-cols-4">
-			<StatCard label="Stock" :value="stock.name" />
+			<StatCard label="Stock" :value="stockName" />
 			<StatCard
 				label="Initial Price"
-				:value="formatPrice(stock.parameters.initialPrice)" />
+				:value="formatPrice(stockParameters.initialPrice)" />
 			<StatCard
 				label="Average"
 				:value="
@@ -68,8 +83,8 @@ onUnmounted(() => {
 				label="Change"
 				:value="`${(
 					(((data.at(-1)?.price ?? 0) -
-						stock.parameters.initialPrice) /
-						stock.parameters.initialPrice) *
+						stockParameters.initialPrice) /
+						stockParameters.initialPrice) *
 					100
 				).toFixed(2)}%`" />
 		</div>
@@ -110,7 +125,7 @@ onUnmounted(() => {
 				:seriesOptions="({
 				priceScaleId: stockName,
 				baseValue: {
-					price: stock.parameters.initialPrice,
+					price: stockParameters.initialPrice,
 					type: 'price',
 				},
 				title: stockName,	
