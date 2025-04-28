@@ -270,6 +270,24 @@ export class Bot {
                 await command.execute(parsedArgs, event);
             }
         } else {
+            if (event.body.toLowerCase().includes("sigma tuah")) {
+                await this.client.sendEvent(
+                    event.roomId,
+                    ...createEvent({
+                        type: "media",
+                        url: "mxc://cpluspatch.dev/ZYFgeNrhgtjrSXYZsKCwPQbp",
+                        meta: {
+                            w: 376,
+                            h: 498,
+                            mimetype: "image/webp",
+                            size: 460926,
+                        },
+                    }),
+                );
+
+                return;
+            }
+
             const keyword = detectKeyword(event.body);
 
             if (keyword) {
