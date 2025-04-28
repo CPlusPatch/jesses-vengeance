@@ -11,6 +11,7 @@ export default defineCommand({
     args: {
         wager: new CurrencyArgument("wager", true, {
             description: "The amount of money to bet",
+            min: 0,
         }),
     },
     execute: async ({ wager }, event): Promise<void> => {
