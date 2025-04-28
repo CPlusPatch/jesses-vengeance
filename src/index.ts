@@ -296,7 +296,6 @@ export class Bot {
                 await event.reply({
                     type: "text",
                     body: response,
-                    mentions: [event.sender],
                 });
 
                 await setCooldown(this, event.roomId, 60);

@@ -132,6 +132,7 @@ export class MessageEvent extends Event {
         const [eventType, eventContent] = createEvent({
             ...options,
             replyTargetId: id,
+            mentions: [...(options.mentions ?? []), this.sender],
         });
 
         return await client.client.sendEvent(roomId, eventType, eventContent);
