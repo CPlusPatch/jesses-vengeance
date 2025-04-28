@@ -59,6 +59,59 @@ export class StringArgument<IsRequired extends boolean> extends Argument<
     }
 }
 
+export class NumberArgument<IsRequired extends boolean> extends Argument<
+    number,
+    IsRequired
+> {
+    public constructor(
+        public name: string,
+        public required: IsRequired,
+        public options?: Partial<{
+            description: string;
+            default: number;
+            min: number;
+            max: number;
+            int: boolean;
+        }>,
+    ) {
+        super(name, required, options);
+    }
+
+    public validate(arg: string): boolean {
+        const value = Number(arg);
+
+        if (Number.isNaN(value)) {
+            throw new ArgumentValidationError(
+                `\`${arg}\` is not a valid number.`,
+            );
+        }
+
+        if (this.options?.min !== undefined && value < this.options.min) {
+            throw new ArgumentValidationError(
+                `\`${arg}\` is less than the minimum value of ${this.options.min}.`,
+            );
+        }
+
+        if (this.options?.max !== undefined && value > this.options.max) {
+            throw new ArgumentValidationError(
+                `\`${arg}\` is greater than the maximum value of ${this.options.max}.`,
+            );
+        }
+
+        if (this.options?.int && !Number.isInteger(value)) {
+            throw new ArgumentValidationError(
+                `\`${arg}\` is not a valid integer.`,
+            );
+        }
+
+        return true;
+    }
+
+    public parse(arg: string): number {
+        return Number(arg);
+    }
+}
+
 export class UserArgument<IsRequired extends boolean> extends Argument<
     User,
     IsRequired

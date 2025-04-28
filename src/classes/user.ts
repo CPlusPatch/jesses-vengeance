@@ -11,6 +11,7 @@ import { clamp, roundCurrency } from "../util/math.ts";
 
 const BANNED_USERS_KEY = "banned_users";
 const COMMAND_USE_KEY = "command_use";
+const STOCK_KEY = "stocks";
 
 interface UserProfile {
     displayname?: string;
@@ -169,6 +170,45 @@ export class User {
         const items = await this.getOwnedItems();
 
         return items.some((i) => i.id === item.id);
+    }
+
+    public async getOwnedStocks(): Promise<{
+        [key: string]: number;
+    }> {
+        const stocks = await client.redis.hGetAll(`${STOCK_KEY}:${this.mxid}`);
+
+        if (!stocks) {
+            return {};
+        }
+
+        return Object.fromEntries(
+            Object.entries(stocks).map(([key, value]) => [key, Number(value)]),
+        );
+    }
+
+    public async getStock(stockName: string): Promise<number> {
+        const stock = await client.redis.hGet(
+            `${STOCK_KEY}:${this.mxid}`,
+            stockName,
+        );
+
+        if (!stock) {
+            return 0;
+        }
+
+        return Number(stock);
+    }
+
+    public async setStock(stockName: string, amount: number): Promise<number> {
+        await client.redis.hSet(`${STOCK_KEY}:${this.mxid}`, stockName, amount);
+
+        return amount;
+    }
+
+    public async addStock(stockName: string, amount: number): Promise<number> {
+        const stock = await this.getStock(stockName);
+
+        return this.setStock(stockName, stock + amount);
     }
 
     public async updateLastCommandUsage(
