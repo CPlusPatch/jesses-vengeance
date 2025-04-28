@@ -33,9 +33,9 @@ const formatPrice = (price: number): string =>
     }).format(price);
 
 const internal = setInterval(async () => {
-    const priceJson = await fetch(
-        `http://localhost:16193/api/v0/stocks/${stock.name}`,
-    ).then((r) => r.json());
+    const priceJson = await fetch(`/api/v0/stocks/${stock.name}`).then((r) =>
+        r.json(),
+    );
 
     data.value.push({
         price: priceJson.price,
