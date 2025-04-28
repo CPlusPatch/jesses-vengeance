@@ -24,9 +24,10 @@ import {
     parseArgs,
 } from "./commands.ts";
 import { config } from "./config.ts";
+import { recalculateTotalWealth } from "./currency.ts";
+import { calculateResponse } from "./util/dad.ts";
 import { createEvent } from "./util/event.ts";
 import { formatRelativeTime } from "./util/math.ts";
-import { calculateResponse } from "./util/dad.ts";
 
 const credentialsFile = file(env.CREDENTIALS_FILE || "./credentials.json");
 
@@ -99,6 +100,11 @@ export class Bot {
 
         await this.loadCommands();
         await this.client.start().then(() => consola.info("Bot started!"));
+
+        consola.info("Running wealth recalculation job...");
+        recalculateTotalWealth().then(() => {
+            consola.info("Wealth recalculated!");
+        });
     }
 
     /**

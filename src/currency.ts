@@ -1,44 +1,12 @@
-import consola from "consola";
-import type { Bot } from "./index.ts";
+import { client } from "../index.ts";
 
 export const DEFAULT_BALANCE = 100;
 export const AMOUNT_CAP = 1e6;
 export const CURRENCY_SYMBOL = "B$";
 export const CURRENCY_NAME = "bitchcoins";
-const BALANCES_KEY = "balances";
-
-export const getUserBalance = async (
-    client: Bot,
-    userId: string,
-): Promise<number> => {
-    const score = await client.redis.zScore(BALANCES_KEY, userId);
-
-    if (score === null) {
-        await client.redis.zAdd(BALANCES_KEY, {
-            score: DEFAULT_BALANCE,
-            value: userId,
-        });
-        return DEFAULT_BALANCE;
-    }
-
-    return score;
-};
-
-export const setUserBalance = async (
-    client: Bot,
-    userId: string,
-    balance: number,
-): Promise<void> => {
-    consola.debug(`Setting balance for ${userId} to ${balance}`);
-    await client.redis.zAdd(BALANCES_KEY, { score: balance, value: userId });
-};
-
-export const deleteUserBalance = async (
-    client: Bot,
-    userId: string,
-): Promise<void> => {
-    await client.redis.zRem(BALANCES_KEY, userId);
-};
+export const BALANCES_KEY = "balances";
+export const BANK_BALANCES_KEY = "bank_balances";
+export const TOTAL_WEALTH_KEY = "total_wealth";
 
 export const formatBalance = (balance: number): string => {
     return `\`${formatBalanceRaw(balance)}\``;
@@ -66,11 +34,10 @@ export const isValidAmount = (amount: number): boolean => {
 };
 
 export const getTopUsers = async (
-    client: Bot,
     limit = 10,
 ): Promise<Array<{ userId: string; balance: number }>> => {
     const topUsers = await client.redis.zRangeWithScores(
-        BALANCES_KEY,
+        TOTAL_WEALTH_KEY,
         0,
         limit - 1,
         { REV: true },
@@ -80,4 +47,11 @@ export const getTopUsers = async (
         userId: user.value,
         balance: user.score,
     }));
+};
+
+export const recalculateTotalWealth = async (): Promise<void> => {
+    await client.redis.zUnionStore(TOTAL_WEALTH_KEY, [
+        BALANCES_KEY,
+        BANK_BALANCES_KEY,
+    ]);
 };

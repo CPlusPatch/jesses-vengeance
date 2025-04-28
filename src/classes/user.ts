@@ -1,12 +1,14 @@
 import { client } from "../../index.ts";
+import {
+    AMOUNT_CAP,
+    BALANCES_KEY,
+    BANK_BALANCES_KEY,
+    DEFAULT_BALANCE,
+    TOTAL_WEALTH_KEY,
+} from "../currency.ts";
 import { getOwnedItems, type ShopItem, setOwnedItems } from "../shop.ts";
 import { clamp, roundCurrency } from "../util/math.ts";
 
-const DEFAULT_BALANCE = 100;
-const AMOUNT_CAP = 1e6;
-const CURRENCY_SYMBOL = "B$";
-const CURRENCY_NAME = "bitchcoins";
-const BALANCES_KEY = "balances";
 const BANNED_USERS_KEY = "banned_users";
 const COMMAND_USE_KEY = "command_use";
 
@@ -82,11 +84,44 @@ export class User {
         return score;
     }
 
+    public async getBankBalance(): Promise<number> {
+        const score = await client.redis.zScore(BANK_BALANCES_KEY, this.mxid);
+
+        if (score === null) {
+            return 0;
+        }
+
+        return score;
+    }
+
     public async setBalance(balance: number): Promise<number> {
         const finalBalance = clamp(roundCurrency(balance), 0, AMOUNT_CAP);
 
         await client.redis.zAdd(BALANCES_KEY, {
             score: finalBalance,
+            value: this.mxid,
+        });
+
+        const currentBankBalance = await this.getBankBalance();
+        await client.redis.zAdd(TOTAL_WEALTH_KEY, {
+            score: finalBalance + currentBankBalance,
+            value: this.mxid,
+        });
+
+        return finalBalance;
+    }
+
+    public async setBankBalance(balance: number): Promise<number> {
+        const finalBalance = clamp(roundCurrency(balance), 0, AMOUNT_CAP);
+
+        await client.redis.zAdd(BANK_BALANCES_KEY, {
+            score: finalBalance,
+            value: this.mxid,
+        });
+
+        const currentBalance = await this.getBalance();
+        await client.redis.zAdd(TOTAL_WEALTH_KEY, {
+            score: finalBalance + currentBalance,
             value: this.mxid,
         });
 
@@ -97,6 +132,12 @@ export class User {
         const balance = await this.getBalance();
 
         return this.setBalance(balance + amount);
+    }
+
+    public async addBankBalance(amount: number): Promise<number> {
+        const balance = await this.getBankBalance();
+
+        return this.setBankBalance(balance + amount);
     }
 
     public async getOwnedItems(): Promise<ShopItem[]> {
