@@ -24,6 +24,8 @@ in
 
       cp ${crypto} node_modules/.pnpm/node_modules/@matrix-org/matrix-sdk-crypto-nodejs/matrix-sdk-crypto.linux-x64-gnu.node
 
+      bun run vite:build
+
       runHook postBuild
     '';
 

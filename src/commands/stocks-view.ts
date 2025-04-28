@@ -1,7 +1,7 @@
 import { client } from "../../index.ts";
 import { StockArgument } from "../classes/arguments.ts";
 import { defineCommand } from "../commands.ts";
-import { stockToSVG } from "../util/finance.ts";
+import { stockToSVG } from "../util/finance-svg.ts";
 
 export default defineCommand({
     name: "stocks:view",

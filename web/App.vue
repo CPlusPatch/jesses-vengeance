@@ -8,8 +8,8 @@ import {
     type DeepPartial,
     LastPriceAnimationMode,
 } from "lightweight-charts";
+import { onUnmounted, type Ref, ref } from "vue";
 import {
-    generateDataPoints,
     type Stock,
     type StockParameters,
     stocks,
@@ -22,15 +22,7 @@ const stock: Stock = {
     parameters: stocks.JESS as StockParameters,
 };
 
-const periodSeconds = 60 * 60 * 24 * 365;
-const samples = 500;
-const start = new Date(2025, 0, 0);
-const data = generateDataPoints(
-    stock.parameters,
-    periodSeconds,
-    samples,
-    start,
-);
+const data: Ref<{ date: Date; price: number }[]> = ref([]);
 
 const formatPrice = (price: number): string =>
     Intl.NumberFormat("en-US", {
@@ -39,16 +31,30 @@ const formatPrice = (price: number): string =>
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     }).format(price);
+
+const internal = setInterval(async () => {
+    const priceJson = await fetch(
+        `http://localhost:16193/api/v0/stocks/${stock.name}`,
+    ).then((r) => r.json());
+
+    data.value.push({
+        price: priceJson.price,
+        date: new Date(priceJson.time * 1000),
+    });
+}, 1000);
+
+onUnmounted(() => {
+    clearInterval(internal);
+});
 </script>
 
 <template>
 	<div class="h-dvh flex flex-col gap-4 p-4 bg-black">
-		<div class="grid gap-4 grid-cols-6">
+		<div class="grid gap-4 grid-cols-4">
 			<StatCard label="Stock" :value="stock.name" />
 			<StatCard
 				label="Initial Price"
 				:value="formatPrice(stock.parameters.initialPrice)" />
-			<StatCard label="Period" value="One year" />
 			<StatCard
 				label="Average"
 				:value="
@@ -64,7 +70,6 @@ const formatPrice = (price: number): string =>
 						stock.parameters.initialPrice) *
 					100
 				).toFixed(2)}%`" />
-			<StatCard label="Samples" :value="samples.toString()" />
 		</div>
 		<div
 			class="flex-1 w-full rounded-lg overflow-hidden border border-white/20">
