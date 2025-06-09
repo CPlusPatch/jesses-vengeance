@@ -300,7 +300,7 @@ export class Bot {
                     body: pickRandomResponse(keyword),
                 });
 
-                await setCooldown(this, event.roomId, 60);
+                await setCooldown(this, event.roomId, 60 * 10); // 10 minutes
             }
 
             // Dadbot functionality
@@ -316,7 +316,7 @@ export class Bot {
                     body: response,
                 });
 
-                await setCooldown(this, event.roomId, 60);
+                await setCooldown(this, event.roomId, 60 * 10); // 10 minutes
             }
         }
     }
