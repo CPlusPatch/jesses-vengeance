@@ -186,31 +186,6 @@ export class User {
         );
     }
 
-    public async getStock(stockName: string): Promise<number> {
-        const stock = await client.redis.hGet(
-            `${STOCK_KEY}:${this.mxid}`,
-            stockName,
-        );
-
-        if (!stock) {
-            return 0;
-        }
-
-        return Number(stock);
-    }
-
-    public async setStock(stockName: string, amount: number): Promise<number> {
-        await client.redis.hSet(`${STOCK_KEY}:${this.mxid}`, stockName, amount);
-
-        return amount;
-    }
-
-    public async addStock(stockName: string, amount: number): Promise<number> {
-        const stock = await this.getStock(stockName);
-
-        return this.setStock(stockName, stock + amount);
-    }
-
     public async updateLastCommandUsage(
         commandName: string,
         timestamp: Date,

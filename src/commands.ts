@@ -1,7 +1,6 @@
 import type {
     CurrencyArgument,
     ShopItemArgument,
-    StockArgument,
     StringArgument,
     UserArgument,
 } from "./classes/arguments.ts";
@@ -11,15 +10,13 @@ export type PossibleArgs =
     | StringArgument<boolean>
     | UserArgument<boolean>
     | CurrencyArgument<boolean>
-    | ShopItemArgument<boolean>
-    | StockArgument<boolean>;
+    | ShopItemArgument<boolean>;
 
 export type RequiredArgs =
     | StringArgument<true>
     | UserArgument<true>
     | CurrencyArgument<true>
-    | ShopItemArgument<true>
-    | StockArgument<true>;
+    | ShopItemArgument<true>;
 
 export interface CommandManifest<
     ArgsRecord extends Record<string, PossibleArgs>,

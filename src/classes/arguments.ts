@@ -1,7 +1,6 @@
 import { client } from "../../index.ts";
 import type { ShopItem } from "../shop.ts";
 import { shopItems } from "../shop.ts";
-import { type Stock, type StockParameters, stocks } from "../util/finance.ts";
 import { roundCurrency } from "../util/math.ts";
 import type { Event } from "./event.ts";
 import { User } from "./user.ts";
@@ -277,36 +276,5 @@ export class ShopItemArgument<IsRequired extends boolean> extends Argument<
 
     public parse(arg: string): ShopItem {
         return shopItems.find((item) => item.id === arg) as ShopItem;
-    }
-}
-
-export class StockArgument<IsRequired extends boolean> extends Argument<
-    Stock,
-    IsRequired
-> {
-    public constructor(
-        public name: string,
-        public required: IsRequired,
-        public options?: Partial<{
-            description: string;
-            default: Stock;
-        }>,
-    ) {
-        super(name, required, options);
-    }
-
-    public validate(arg: string): boolean {
-        return Object.entries(stocks).some(
-            ([key]) => key.toLowerCase() === arg.toLowerCase(),
-        );
-    }
-
-    public parse(arg: string): Stock {
-        const stock = stocks[arg as keyof typeof stocks] as StockParameters;
-
-        return {
-            name: arg,
-            parameters: stock,
-        };
     }
 }

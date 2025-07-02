@@ -24,14 +24,12 @@ in
 
       cp ${crypto} node_modules/.pnpm/node_modules/@matrix-org/matrix-sdk-crypto-nodejs/matrix-sdk-crypto.linux-x64-gnu.node
 
-      bun run vite:build
-
       runHook postBuild
     '';
 
     pnpmDeps = pnpm.fetchDeps {
       inherit (finalAttrs) pname version src;
-      hash = "sha256-Z1+wKk3e2aMQFzfM4Qk5+i249Kp8XmCcBEos9emCHRE=";
+      hash = "sha256-NvHhjuIT4oKutDX2feeoTLUHn5Dw6uM2cyc9u5qZ0CI=";
     };
 
     nativeBuildInputs = [
