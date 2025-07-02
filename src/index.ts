@@ -28,6 +28,7 @@ import { recalculateTotalWealth } from "./currency.ts";
 import { calculateResponse } from "./util/dad.ts";
 import { createEvent } from "./util/event.ts";
 import { eventManager } from "./util/event-manager.ts";
+import { parseHtmlCommand } from "./util/html-parser.ts";
 import { formatRelativeTime } from "./util/math.ts";
 
 const credentialsFile = file(env.CREDENTIALS_FILE || "./credentials.json");
@@ -125,8 +126,6 @@ export class Bot {
     private async handleReaction(event: ReactionEvent): Promise<void> {
         const target = await event.getTarget();
 
-        console.log(target);
-
         // Emit reaction event for handlers
         if (target && target instanceof MessageEvent) {
             eventManager.emit("reaction", {
@@ -203,16 +202,12 @@ export class Bot {
             }
         }
 
-        if (event.body.startsWith(config.commands.prefix)) {
-            const commandName = event.body
-                .split(" ")[0]
-                ?.slice(config.commands.prefix.length)
-                .toLowerCase();
+        const htmlCommand = parseHtmlCommand(
+            event.formattedBody || event.body,
+            config.commands.prefix,
+        );
 
-            if (!commandName) {
-                return;
-            }
-
+        if (htmlCommand) {
             if (
                 config.users.banned.some((b) =>
                     new Glob(b).match(event.sender.mxid),
@@ -249,7 +244,8 @@ export class Bot {
 
             const command = this.commands.find(
                 (c) =>
-                    c.name === commandName || c.aliases?.includes(commandName),
+                    c.name === htmlCommand.commandName ||
+                    c.aliases?.includes(htmlCommand.commandName),
             );
 
             if (command) {
@@ -277,12 +273,14 @@ export class Bot {
                     new Date(),
                 );
 
-                const args = event.body.split(" ").slice(1);
-
                 let parsedArgs: Awaited<ReturnType<typeof parseArgs>>;
 
                 try {
-                    parsedArgs = await parseArgs(args, command, event);
+                    parsedArgs = await parseArgs(
+                        htmlCommand.args,
+                        command,
+                        event,
+                    );
                 } catch (e) {
                     await event.reply({
                         type: "text",
@@ -292,7 +290,7 @@ export class Bot {
                 }
 
                 consola.debug(
-                    `User ${event.sender.mxid} executed command ${commandName} with args ${JSON.stringify(args)}`,
+                    `User ${event.sender.mxid} executed command ${htmlCommand.commandName} with args ${JSON.stringify(htmlCommand.args)}`,
                 );
 
                 await command.execute(parsedArgs, event);

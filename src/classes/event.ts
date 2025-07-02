@@ -132,6 +132,10 @@ export class MessageEvent extends Event {
         return Event.parseBody(this.content.body);
     }
 
+    public get formattedBody(): string | null {
+        return this.content.formatted_body ?? null;
+    }
+
     public static async fromMatrixEventId(
         roomId: string,
         id: string,

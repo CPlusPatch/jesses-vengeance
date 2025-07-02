@@ -77,6 +77,12 @@ export class NumberArgument<IsRequired extends boolean> extends Argument<
     }
 
     public validate(arg: string): boolean {
+        if (!arg.trim()) {
+            throw new ArgumentValidationError(
+                `\`${arg}\` is not a valid number.`,
+            );
+        }
+
         const value = Number(arg);
 
         if (Number.isNaN(value)) {
@@ -128,44 +134,21 @@ export class UserArgument<IsRequired extends boolean> extends Argument<
         super(name, required, options);
     }
 
-    private static async parseUserId(
-        roomId: string,
-        arg: string,
-    ): Promise<string | null> {
-        // Parsing strategies:
-        // 1. MXID
-        // 2. Display name
-        // 3. Username
-
-        if (arg.match(/^@[^:]*:.+$/)) {
-            return arg;
-        }
-
-        const users = await client.client.getRoomMembers(roomId);
-
-        const matching = users.find((u) => {
-            const displayName = u.content.displayname?.toLowerCase() ?? "";
-            return displayName === arg.toLowerCase();
-        });
-
-        if (matching) {
-            return matching.sender;
-        }
-
-        const matchingUser = users.find((u) => {
-            const userId = u.sender.split(":")[0]?.replace(/@/, "") ?? "";
-            return userId.toLowerCase() === arg.toLowerCase();
-        });
-
-        if (matchingUser) {
-            return matchingUser.sender;
+    private static parseUserIdFromHtml(arg: string): string | null {
+        // Check if this is a Matrix.to URL (from HTML link)
+        if (arg.startsWith("https://matrix.to/#/")) {
+            const mxid = arg.replace("https://matrix.to/#/", "");
+            if (mxid.match(/^@[^:]*:.+$/)) {
+                return mxid;
+            }
         }
 
         return null;
     }
 
     public async validate(arg: string, event: Event): Promise<boolean> {
-        const userId = await UserArgument.parseUserId(event.roomId, arg);
+        // Parse from HTML link (Matrix mentions) only
+        const userId = UserArgument.parseUserIdFromHtml(arg);
 
         if (!userId) {
             throw new ArgumentValidationError(
@@ -197,10 +180,15 @@ export class UserArgument<IsRequired extends boolean> extends Argument<
         return true;
     }
 
-    public async parse(arg: string, event: Event): Promise<User> {
-        const userId = await UserArgument.parseUserId(event.roomId, arg);
+    public parse(arg: string): User {
+        // Parse from HTML link (Matrix mentions) only
+        const userId = UserArgument.parseUserIdFromHtml(arg);
 
-        return new User(userId as string);
+        if (!userId) {
+            throw new Error("Invalid user argument - not a Matrix.to URL");
+        }
+
+        return new User(userId);
     }
 }
 
