@@ -316,7 +316,7 @@ export class Bot {
 
             const keyword = detectKeyword(event.body);
 
-            if (keyword) {
+            if (keyword && config.responses.enabled) {
                 if (await isUnderCooldown(this, event.roomId)) {
                     return;
                 }
@@ -326,13 +326,17 @@ export class Bot {
                     body: pickRandomResponse(keyword),
                 });
 
-                await setCooldown(this, event.roomId, 60 * 10); // 10 minutes
+                await setCooldown(
+                    this,
+                    event.roomId,
+                    config.responses.cooldown || 60 * 10,
+                ); // 10 minutes
             }
 
             // Dadbot functionality
             const response = calculateResponse(event.body, event.sender);
 
-            if (response) {
+            if (response && config.responses.enabled) {
                 if (await isUnderCooldown(this, event.roomId)) {
                     return;
                 }
@@ -342,7 +346,11 @@ export class Bot {
                     body: response,
                 });
 
-                await setCooldown(this, event.roomId, 60 * 10); // 10 minutes
+                await setCooldown(
+                    this,
+                    event.roomId,
+                    config.responses.cooldown || 60 * 10,
+                ); // 10 minutes
             }
         }
     }

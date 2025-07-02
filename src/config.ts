@@ -17,6 +17,7 @@ interface Config {
         prefix: string;
     };
     responses: {
+        enabled: boolean;
         cooldown: number;
     };
     encryption: {
