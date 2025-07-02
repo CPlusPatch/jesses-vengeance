@@ -4,7 +4,7 @@ import { simulateStockPrice, stocks } from "./src/util/finance.ts";
 
 export const client = new Bot();
 
-client.start();
+void client.start();
 
 serve({
     port: 16193,

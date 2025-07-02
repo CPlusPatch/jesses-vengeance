@@ -1,5 +1,4 @@
-import { CurrencyArgument } from "../classes/arguments.ts";
-import { UserArgument } from "../classes/arguments.ts";
+import { CurrencyArgument, UserArgument } from "../classes/arguments.ts";
 import { defineCommand } from "../commands.ts";
 import { formatBalance } from "../currency.ts";
 

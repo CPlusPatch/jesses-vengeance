@@ -102,9 +102,8 @@ export class Bot {
         await this.client.start().then(() => consola.info("Bot started!"));
 
         consola.info("Running wealth recalculation job...");
-        recalculateTotalWealth().then(() => {
-            consola.info("Wealth recalculated!");
-        });
+        await recalculateTotalWealth();
+        consola.info("Wealth recalculated!");
     }
 
     /**

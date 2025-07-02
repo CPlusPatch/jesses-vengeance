@@ -35,7 +35,7 @@ const rtf = new Intl.RelativeTimeFormat("en", {
 });
 
 export const formatRelativeTime = (elapsedMs: number): string => {
-    // biome-ignore lint/nursery/useGuardForIn: <explanation>
+    // biome-ignore lint/suspicious/useGuardForIn: No hidden prototype properties
     for (const unit in units) {
         const unitMs = units[unit as keyof typeof units];
 

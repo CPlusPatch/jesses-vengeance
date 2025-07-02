@@ -62,11 +62,11 @@ export default defineCommand({
             const punishment = getStealAmount() * senderBalance;
             const towCharge = punishment * 0.4;
 
-            let newSenderBalance = await event.sender.addBalance(-punishment);
+            await event.sender.addBalance(-punishment);
             await target.addBalance(punishment);
 
             if (hasVan) {
-                newSenderBalance = await event.sender.addBalance(-towCharge);
+                await event.sender.addBalance(-towCharge);
             }
 
             await event.reply({

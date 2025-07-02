@@ -1,5 +1,5 @@
 {
-    "$schema": "https://biomejs.dev/schemas/2.0.0-beta.1/schema.json",
+    "$schema": "https://biomejs.dev/schemas/2.0.6/schema.json",
     "assist": {
         "actions": {
             "source": {
@@ -44,7 +44,6 @@
                     }
                 },
                 "useLiteralEnumMembers": "error",
-                "noCommaOperator": "error",
                 "noNegationElse": "error",
                 "noYodaExpression": "error",
                 "useBlockStatements": "error",
@@ -64,7 +63,6 @@
                 "useThrowOnlyError": "error",
                 "useNodejsImportProtocol": "error",
                 "useAsConstAssertion": "error",
-                "useNumericLiterals": "error",
                 "useEnumInitializers": "error",
                 "useSelfClosingElements": "error",
                 "useConst": "error",
@@ -73,14 +71,27 @@
                 "useNumberNamespace": "error",
                 "noInferrableTypes": "error",
                 "useExponentiationOperator": "error",
+                "noCommonJs": "warn",
+                "noExportedImports": "warn",
+                "noSubstr": "warn",
                 "useTemplate": "error",
                 "noParameterAssign": "error",
                 "noNonNullAssertion": "error",
                 "useDefaultParameterLast": "error",
-                "noArguments": "error",
+                "useArrayLiterals": "error",
+                "useConsistentMemberAccessibility": {
+                    "level": "warn",
+                    "options": {
+                        "accessibility": "explicit"
+                    }
+                },
                 "useImportType": "error",
                 "useExportType": "error",
                 "noUselessElse": "error",
+                "useTrimStartEnd": "warn",
+                "useAtIndex": "warn",
+                "useCollapsedIf": "warn",
+                "noProcessEnv": "error",
                 "useShorthandFunctionType": "error"
             },
             "correctness": {
@@ -89,51 +100,36 @@
                 "noUndeclaredDependencies": "error",
                 "noUnusedFunctionParameters": "error",
                 "noUnusedImports": "error",
-                "noUnusedPrivateClassMembers": "error",
-                "useArrayLiterals": "error"
+                "noUnusedPrivateClassMembers": "error"
             },
             "nursery": {
                 "noBitwiseOperators": "error",
                 "noConstantBinaryExpression": "error",
                 "noFloatingPromises": "error",
                 "noGlobalDirnameFilename": "error",
-                "noOctalEscape": "error",
-                "noProcessEnv": "error",
-                "noDuplicateElseIf": "warn",
                 "noProcessGlobal": "warn",
                 "noTsIgnore": "warn",
-                "useAtIndex": "warn",
-                "useCollapsedIf": "warn",
                 "useConsistentObjectDefinition": {
                     "level": "warn",
                     "options": {
                         "syntax": "shorthand"
                     }
                 },
-                "useConsistentMemberAccessibility": {
-                    "level": "warn",
-                    "options": {
-                        "accessibility": "explicit"
-                    }
-                },
                 "useParseIntRadix": "warn",
-                "noCommonJs": "warn",
-                "noDynamicNamespaceImportAccess": "warn",
-                "noExportedImports": "warn",
-                "noIrregularWhitespace": "warn",
-                "noSubstr": "warn",
-                "noTemplateCurlyInString": "warn",
-                "noUselessEscapeInRegex": "warn",
-                "noUselessStringRaw": "warn",
-                "useAdjacentOverloadSignatures": "warn",
-                "useExplicitType": "warn",
-                "useGuardForIn": "warn",
-                "useTrimStartEnd": "warn"
+                "useExplicitType": "off"
+            },
+            "performance": {
+                "noDynamicNamespaceImportAccess": "warn"
             },
             "complexity": {
                 "noForEach": "error",
                 "noUselessStringConcat": "error",
+                "noArguments": "error",
+                "noUselessEscapeInRegex": "warn",
                 "useDateNow": "error",
+                "noUselessStringRaw": "warn",
+                "noCommaOperator": "error",
+                "useNumericLiterals": "error",
                 "useSimplifiedLogicExpression": "error",
                 "useWhile": "error"
             },
@@ -142,7 +138,13 @@
                 "noEmptyBlockStatements": "error",
                 "noEvolvingTypes": "error",
                 "noExportsInTest": "error",
+                "noTemplateCurlyInString": "warn",
+                "useAdjacentOverloadSignatures": "warn",
                 "noVar": "error",
+                "noOctalEscape": "error",
+                "noIrregularWhitespace": "warn",
+                "noDuplicateElseIf": "warn",
+                "useGuardForIn": "warn",
                 "useAwait": "error",
                 "useErrorMessage": "error",
                 "useNumberToFixedDigitsArgument": "error",

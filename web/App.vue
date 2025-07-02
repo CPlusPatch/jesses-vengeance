@@ -51,8 +51,6 @@ const internal = setInterval(async () => {
 onUnmounted(() => {
     clearInterval(internal);
 });
-
-const log = console.log;
 </script>
 
 <template>
