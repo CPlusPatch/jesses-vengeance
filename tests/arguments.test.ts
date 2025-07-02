@@ -10,7 +10,7 @@ import { User } from "../src/classes/user.ts";
 import { mockClient } from "./mocks.ts";
 
 // Mock the client import
-mock.module("../../index.ts", () => ({
+mock.module("../index.ts", () => ({
     client: mockClient,
 }));
 
