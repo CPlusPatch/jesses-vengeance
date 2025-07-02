@@ -4,6 +4,10 @@ import {
     type MediaEventCreationOptions,
     type TextEventCreationOptions,
 } from "../util/event.ts";
+import {
+    type EventHandlerEvents,
+    eventManager,
+} from "../util/event-manager.ts";
 import { User } from "./user.ts";
 
 type EventType = "reaction" | "message";
@@ -64,6 +68,42 @@ export class Event {
                 return null;
         }
     }
+
+    /**
+     * Register a handler for when this event receives a reply
+     */
+    public onReply(
+        handler: (data: EventHandlerEvents["reply"]) => void,
+    ): () => void {
+        const eventHandler = (data: EventHandlerEvents["reply"]) => {
+            if (data.originalEvent.id === this.id) {
+                handler(data);
+            }
+        };
+
+        eventManager.on("reply", eventHandler);
+
+        // Return unsubscribe function
+        return () => eventManager.off("reply", eventHandler);
+    }
+
+    /**
+     * Register a handler for when this event receives a reaction
+     */
+    public onReaction(
+        handler: (data: EventHandlerEvents["reaction"]) => void,
+    ): () => void {
+        const eventHandler = (data: EventHandlerEvents["reaction"]) => {
+            if (data.originalEvent.id === this.id) {
+                handler(data);
+            }
+        };
+
+        eventManager.on("reaction", eventHandler);
+
+        // Return unsubscribe function
+        return () => eventManager.off("reaction", eventHandler);
+    }
 }
 
 export class ReactionEvent extends Event {
@@ -75,9 +115,9 @@ export class ReactionEvent extends Event {
         throw new Error("No reaction found");
     }
 
-    public getTarget(): Promise<Event | null> {
+    public getTarget(): Promise<MessageEvent | null> {
         if (this.content?.["m.relates_to"]?.event_id) {
-            return Event.fromMatrixEventId(
+            return MessageEvent.fromMatrixEventId(
                 this.roomId,
                 this.content["m.relates_to"].event_id,
             );
@@ -126,7 +166,7 @@ export class MessageEvent extends Event {
         options:
             | Omit<TextEventCreationOptions, "replyTargetId">
             | Omit<MediaEventCreationOptions, "replyTargetId">,
-    ): Promise<string> {
+    ): Promise<MessageEvent> {
         const { roomId, id } = this;
 
         const [eventType, eventContent] = createEvent({
@@ -135,7 +175,23 @@ export class MessageEvent extends Event {
             mentions: [...(options.mentions ?? []), this.sender],
         });
 
-        return await client.client.sendEvent(roomId, eventType, eventContent);
+        const replyEventId = await client.client.sendEvent(
+            roomId,
+            eventType,
+            eventContent,
+        );
+
+        const replyEvent = (await MessageEvent.fromMatrixEventId(
+            roomId,
+            replyEventId,
+        )) as MessageEvent;
+
+        eventManager.emit("reply", {
+            originalEvent: this,
+            replyEvent,
+        });
+
+        return replyEvent;
     }
 
     public async edit(

@@ -27,6 +27,7 @@ import { config } from "./config.ts";
 import { recalculateTotalWealth } from "./currency.ts";
 import { calculateResponse } from "./util/dad.ts";
 import { createEvent } from "./util/event.ts";
+import { eventManager } from "./util/event-manager.ts";
 import { formatRelativeTime } from "./util/math.ts";
 
 const credentialsFile = file(env.CREDENTIALS_FILE || "./credentials.json");
@@ -124,6 +125,16 @@ export class Bot {
     private async handleReaction(event: ReactionEvent): Promise<void> {
         const target = await event.getTarget();
 
+        console.log(target);
+
+        // Emit reaction event for handlers
+        if (target && target instanceof MessageEvent) {
+            eventManager.emit("reaction", {
+                originalEvent: target,
+                reactionEvent: event,
+            });
+        }
+
         // Delete the reacted message if the reaction is a trash emoji
         if (
             event.reaction &&
@@ -166,12 +177,30 @@ export class Bot {
     }
 
     private async handleMessage(event: MessageEvent): Promise<void> {
-        if (await event.sender.isBot()) {
+        if ((await event.sender.isBot()) || !event.isText()) {
             return;
         }
 
-        if (!event.isText()) {
-            return;
+        // Check if this is a reply and emit the reply event
+        if (event.inReplyToId) {
+            try {
+                const originalEvent = await MessageEvent.fromMatrixEventId(
+                    event.roomId,
+                    event.inReplyToId,
+                );
+
+                if (originalEvent) {
+                    eventManager.emit("reply", {
+                        originalEvent,
+                        replyEvent: event,
+                    });
+                }
+            } catch (error) {
+                consola.debug(
+                    "Failed to fetch original event for reply:",
+                    error,
+                );
+            }
         }
 
         if (event.body.startsWith(config.commands.prefix)) {

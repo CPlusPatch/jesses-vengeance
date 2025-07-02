@@ -24,7 +24,8 @@
         "c12": "^3.0.4",
         "consola": "^3.4.2",
         "markdown-it": "^14.1.0",
-        "matrix-bot-sdk": "^0.7.1"
+        "matrix-bot-sdk": "^0.7.1",
+        "mitt": "^3.0.1"
     },
     "trustedDependencies": [
         "@biomejs/biome",

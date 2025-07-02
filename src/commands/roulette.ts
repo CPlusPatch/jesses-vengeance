@@ -1,6 +1,4 @@
-import { client } from "../../index.ts";
 import { CurrencyArgument } from "../classes/arguments.ts";
-import { MessageEvent } from "../classes/event.ts";
 import { defineCommand } from "../commands.ts";
 import { randint } from "../util/math.ts";
 
@@ -27,14 +25,10 @@ export default defineCommand({
 
         const result = randint(1, 6);
 
-        const spinEventId = await event.reply({
+        const spinEvent = await event.reply({
             type: "text",
             body: "Spinning the wheel...",
         });
-
-        const spinEvent = new MessageEvent(
-            await client.client.getEvent(event.roomId, spinEventId),
-        );
 
         await Bun.sleep(1000);
 
