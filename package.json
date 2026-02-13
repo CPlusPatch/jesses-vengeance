@@ -24,7 +24,7 @@
         "c12": "^3.0.4",
         "consola": "^3.4.2",
         "happy-dom": "^18.0.1",
-        "markdown-it": "^14.1.0",
+        "markdown-it": "^14.1.1",
         "matrix-bot-sdk": "^0.7.1",
         "mitt": "^3.0.1"
     },
